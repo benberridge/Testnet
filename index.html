@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <!-- CSP: self + jsDelivr ESM, allow inline CSS/JS -->
+  <meta http-equiv="Content-Security-Policy"
+        content="
+          default-src 'self';
+          script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+          style-src  'self' https://fonts.googleapis.com 'unsafe-inline';
+          connect-src 'self' https://rpc.sonic.network https://rpc.soniclabs.com;
+          font-src   'self' https://fonts.gstatic.com;
+          img-src    'self' data: https://*.ardrive.net;
+        " />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Power of 10</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-dark: #0a0a1f;
+      --neon: #00ffe1;
+      --neon-dim: rgba(0,255,225,0.2);
+      --text-light: #e0e0e0;
+      --card-bg: rgba(255,255,255,0.05);
+      --radius: 16px;
+      --gap: 1.5rem;
+      --transition: 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
+      color: var(--text-light);
+      font-family: 'Roboto', sans-serif;
+      padding: var(--gap);
+      line-height: 1.4;
+    }
+
+    /* Header Brand */
+    .brand {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--neon);
+      text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon);
+      margin-bottom: var(--gap);
+      letter-spacing: 2px;
+    }
+
+    /* Wallet Button */
+    #wallet-button {
+      position: fixed;
+      top: var(--gap);
+      right: var(--gap);
+      padding: .6rem 1.2rem;
+      border: 2px solid var(--neon);
+      background: transparent;
+      color: var(--neon);
+      border-radius: var(--radius);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      z-index: 10;
+    }
+    #wallet-button:hover {
+      background: var(--neon-dim);
+      color: #fff;
+    }
+
+    /* Banner */
+    .banner-wrapper {
+      max-width: 300px;
+      margin: 0 auto calc(var(--gap) * 1.5);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    }
+    .banner-wrapper img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Grid of Cards */
+    .lower-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--gap);
+    }
+
+    .box {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: var(--gap);
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .box:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--neon);
+      text-align: center;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 4px var(--neon);
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: .5rem;
+      color: var(--text-light);
+    }
+
+    select, input {
+      width: 100%;
+      padding: .6rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: border var(--transition);
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--neon);
+    }
+
+    button {
+      padding: .75rem;
+      border: 2px solid var(--neon);
+      background: transparent;
+      color: var(--neon);
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+    }
+    button:hover {
+      background: var(--neon-dim);
+      color: #fff;
+    }
+
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info {
+      text-align: center;
+      margin: .75rem 0;
+      font-size: .95rem;
+      color: var(--text-light);
+    }
+
+    #status, #stake-status {
+      text-align: center;
+      margin-top: .5rem;
+      min-height: 1.2em;
+      font-size: .9rem;
+      color: var(--neon);
+    }
+
+    /* Footer Socials */
+    .socials {
+      text-align: center;
+      margin-top: var(--gap);
+    }
+    .socials a {
+      margin: 0 .5rem;
+      display: inline-block;
+    }
+    .socials img {
+      width: 28px;
+      height: 28px;
+      filter: drop-shadow(0 0 4px var(--neon));
+    }
+  </style>
+</head>
+
+<body>
+  <div class="brand">Power of 10</div>
+
+  <button id="wallet-button">Connect Wallet</button>
+
+  <div class="banner-wrapper">
+    <img
+      src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
+      alt="Power of 10 Banner"
+    />
+  </div>
+
+  <div class="lower-section">
+    <!-- Mint Card -->
+    <div class="box">
+      <h1>Mint NFT</h1>
+      <div class="form-group">
+        <label for="power-select">Select Power</label>
+        <select id="power-select">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        <button id="mint-button">Mint Now</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <!-- Staking Card -->
+    <div class="box">
+      <h1>Stake &amp; Unstake</h1>
+      <div class="form-group">
+        <label for="stake-select">Your NFTs</label>
+        <select id="stake-select" multiple size="5"></select>
+        <button id="stake-button">Stake Selected</button>
+      </div>
+      <div class="form-group">
+        <label for="unstake-select">Staked NFTs</label>
+        <select id="unstake-select" multiple size="5"></select>
+        <button id="unstake-button">Unstake Selected</button>
+      </div>
+      <div class="info" id="staked-info">Staked NFTs: 0 | Power: 0</div>
+      <div class="info" id="pending-rewards">Rewards: 0 S</div>
+      <button id="claim-button">Claim Rewards</button>
+      <div id="stake-status"></div>
+    </div>
+
+    <!-- Coming Soon Card -->
+    <div class="box">
+      <h1>Coming Soon</h1>
+      <p class="info">New power-ups and utilities launching shortly!</p>
+    </div>
+  </div>
+
+  <div class="socials">
+    <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"></a>
+    <a href="#" id="x-link"     ><img src="PATH_TO_X_ICON"     alt="X"></a>
+    <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
+  </div>
+
+  <script type="module">
+    import * as ethers from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+    // … your existing JS logic unchanged …
+  </script>
+</body>
+</html>
