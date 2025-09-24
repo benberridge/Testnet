@@ -31,9 +31,7 @@
       --gap: 1.5rem;
       --transition: 0.3s ease;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
       color: var(--text-light);
@@ -41,7 +39,6 @@
       padding: var(--gap);
       line-height: 1.4;
     }
-
     .brand {
       text-align: center;
       font-size: 2.5rem;
@@ -51,7 +48,6 @@
       margin-bottom: var(--gap);
       letter-spacing: 2px;
     }
-
     #wallet-button {
       position: fixed;
       top: var(--gap);
@@ -67,7 +63,6 @@
       z-index: 10;
     }
     #wallet-button:hover { background: var(--neon-dim); color: #fff; }
-
     .banner-wrapper {
       max-width: 300px;
       margin: 0 auto calc(var(--gap) * 1.5);
@@ -76,13 +71,11 @@
       box-shadow: 0 0 20px rgba(0,0,0,0.7);
     }
     .banner-wrapper img { display: block; width: 100%; height: auto; }
-
     .lower-section {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: var(--gap);
     }
-
     .box {
       background: var(--card-bg);
       backdrop-filter: blur(12px);
@@ -97,7 +90,6 @@
       transform: translateY(-6px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
-
     h1 {
       font-size: 1.8rem;
       font-weight: 700;
@@ -106,13 +98,11 @@
       margin-bottom: 1rem;
       text-shadow: 0 0 4px var(--neon);
     }
-
     label {
       font-weight: 500;
       margin-bottom: .5rem;
       color: var(--text-light);
     }
-
     select, input {
       width: 100%;
       padding: .6rem;
@@ -125,7 +115,6 @@
       transition: border var(--transition);
     }
     select:focus, input:focus { outline: none; border-color: var(--neon); }
-
     button {
       padding: .75rem;
       border: 2px solid var(--neon);
@@ -137,20 +126,17 @@
       transition: background var(--transition), color var(--transition);
     }
     button:hover { background: var(--neon-dim); color: #fff; }
-
     .form-group {
       flex: 1;
       display: flex;
       flex-direction: column;
     }
-
     .info {
       text-align: center;
       margin: .75rem 0;
       font-size: .95rem;
       color: var(--text-light);
     }
-
     #status, #stake-status {
       text-align: center;
       margin-top: .5rem;
@@ -158,7 +144,6 @@
       font-size: .9rem;
       color: var(--neon);
     }
-
     .socials {
       text-align: center;
       margin-top: var(--gap);
@@ -255,17 +240,144 @@
     const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
     const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
 
-    // 3) Minimal ABI for minting
+    // 3) Full NFT‐contract ABI
     const NFT_ABI = [
-      'function feeForPower(uint8) view returns (uint256)',
-      'function mint(uint8) payable'
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "approved", "type": "address" },
+          { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+        ],
+        "name": "Approval",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "operator", "type": "address" },
+          { "indexed": false, "internalType": "bool", "name": "approved", "type": "bool" }
+        ],
+        "name": "ApprovalForAll",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "to", "type": "address" },
+          { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+        ],
+        "name": "Transfer",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "to", "type": "address" },
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+        ],
+        "name": "approve",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "address", "name": "owner", "type": "address" } ],
+        "name": "balanceOf",
+        "outputs": [ { "internalType": "uint256", "name": "balance", "type": "uint256" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ],
+        "name": "getApproved",
+        "outputs": [ { "internalType": "address", "name": "operator", "type": "address" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "owner", "type": "address" },
+          { "internalType": "address", "name": "operator", "type": "address" }
+        ],
+        "name": "isApprovedForAll",
+        "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ],
+        "name": "ownerOf",
+        "outputs": [ { "internalType": "address", "name": "owner", "type": "address" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "from", "type": "address" },
+          { "internalType": "address", "name": "to", "type": "address" },
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+        ],
+        "name": "safeTransferFrom",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "from", "type": "address" },
+          { "internalType": "address", "name": "to", "type": "address" },
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+          { "internalType": "bytes", "name": "data", "type": "bytes" }
+        ],
+        "name": "safeTransferFrom",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "operator", "type": "address" },
+          { "internalType": "bool", "name": "approved", "type": "bool" }
+        ],
+        "name": "setApprovalForAll",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "bytes4", "name": "interfaceId", "type": "bytes4" } ],
+        "name": "supportsInterface",
+        "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ],
+        "name": "tokenPower",
+        "outputs": [ { "internalType": "uint8", "name": "", "type": "uint8" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "from", "type": "address" },
+          { "internalType": "address", "name": "to", "type": "address" },
+          { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+        ],
+        "name": "transferFrom",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
     ];
 
     // 4) Stub ABI for staking (fill in your full interface)
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
-      'function claimRewards()',
+      'function claimRewards()'
       // add your view functions here
     ];
 
