@@ -32,11 +32,7 @@
       --transition: 0.3s ease;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
@@ -70,10 +66,7 @@
       transition: background var(--transition), color var(--transition);
       z-index: 10;
     }
-    #wallet-button:hover {
-      background: var(--neon-dim);
-      color: #fff;
-    }
+    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
 
     .banner-wrapper {
       max-width: 300px;
@@ -82,11 +75,7 @@
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0,0,0,0.7);
     }
-    .banner-wrapper img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
+    .banner-wrapper img { display: block; width: 100%; height: auto; }
 
     .lower-section {
       display: grid;
@@ -135,10 +124,7 @@
       font-size: 1rem;
       transition: border var(--transition);
     }
-    select:focus, input:focus {
-      outline: none;
-      border-color: var(--neon);
-    }
+    select:focus, input:focus { outline: none; border-color: var(--neon); }
 
     button {
       padding: .75rem;
@@ -150,10 +136,7 @@
       cursor: pointer;
       transition: background var(--transition), color var(--transition);
     }
-    button:hover {
-      background: var(--neon-dim);
-      color: #fff;
-    }
+    button:hover { background: var(--neon-dim); color: #fff; }
 
     .form-group {
       flex: 1;
@@ -180,10 +163,7 @@
       text-align: center;
       margin-top: var(--gap);
     }
-    .socials a {
-      margin: 0 .5rem;
-      display: inline-block;
-    }
+    .socials a { margin: 0 .5rem; display: inline-block; }
     .socials img {
       width: 28px;
       height: 28px;
@@ -249,7 +229,7 @@
     <!-- Coming Soon Card -->
     <div class="box">
       <h1>Coming Soon</h1>
-      <p class="info">redeem your investment launching shortly!</p>
+      <p class="info">Redeem utilities launching shortly!</p>
     </div>
   </div>
 
@@ -262,7 +242,7 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // Sonic Testnet configuration
+    // 1) Sonic Testnet network params
     const TESTNET = {
       chainId: '0x3909',                     // 14601 decimal
       chainName: 'Sonic Testnet',
@@ -271,9 +251,27 @@
       blockExplorerUrls: ['https://testnet.sonicscan.org']
     };
 
-    let provider, signer;
+    // 2) Your deployed contracts
+    const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
+    const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
 
-    // Connect wallet and switch to testnet
+    // 3) Minimal ABI for minting
+    const NFT_ABI = [
+      'function feeForPower(uint8) view returns (uint256)',
+      'function mint(uint8) payable'
+    ];
+
+    // 4) Stub ABI for staking (fill in your full interface)
+    const STAKING_ABI = [
+      'function stake(uint256[])',
+      'function unstake(uint256[])',
+      'function claimRewards()',
+      // add your view functions here
+    ];
+
+    let provider, signer;
+    let nftContract, stakingContract;
+
     async function connectWallet() {
       if (!window.ethereum) {
         alert('Please install a Web3 wallet');
@@ -286,41 +284,60 @@
 
       await switchToTestnet();
 
-      const network = await provider.getNetwork();
-      if (network.chainId !== parseInt(TESTNET.chainId, 16)) {
+      const net = await provider.getNetwork();
+      if (net.chainId !== parseInt(TESTNET.chainId, 16)) {
         document.getElementById('status').textContent =
-          `Wrong network. Please switch to Sonic Testnet (chainId 14601).`;
+          'Wrong network. Please switch to Sonic Testnet.';
         return;
       }
 
       document.getElementById('wallet-button').textContent =
         await signer.getAddress();
       document.getElementById('status').textContent = 'Connected to Testnet';
+
+      // instantiate contracts
+      nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
+      stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+
       initDappLogic();
     }
 
-    // Switch or add the Sonic Testnet chain in the wallet
     async function switchToTestnet() {
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: TESTNET.chainId }]
         });
-      } catch (switchError) {
-        if (switchError.code === 4902) {
+      } catch (err) {
+        if (err.code === 4902) {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [TESTNET]
           });
         } else {
-          console.error('Failed to switch network', switchError);
+          console.error('Network switch failed', err);
         }
       }
     }
 
-    // Initialize your mint & stake logic here
     function initDappLogic() {
-      // Hook up your testnet NFT contract address and ABI here
+      // Mint button handler
+      document.getElementById('mint-button')
+        .addEventListener('click', async () => {
+          const power = parseInt(document.getElementById('power-select').value);
+          try {
+            const cost = await nftContract.feeForPower(power);
+            const tx   = await nftContract.mint(power, { value: cost });
+            document.getElementById('status').textContent = 'Minting…';
+            await tx.wait();
+            document.getElementById('status').textContent = 'Mint successful!';
+          } catch (e) {
+            document.getElementById('status').textContent = e.message;
+          }
+        });
+
+      // TODO: Hook up stakingContract.stake, unstake, claimRewards, and
+      // populate #stake-select / #unstake-select / stats views.
     }
 
     document
