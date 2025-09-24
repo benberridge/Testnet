@@ -240,8 +240,9 @@
     const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
     const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
 
-    // 3) Full NFT‐contract ABI
+    // 3) Full NFT-contract ABI, including feeForPower & mint
     const NFT_ABI = [
+      // standard ERC-721 events & methods...
       {
         "anonymous": false,
         "inputs": [
@@ -369,6 +370,22 @@
         "name": "transferFrom",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+
+      // ← Add these two methods so feeForPower & mint exist on nftContract
+      {
+        "inputs": [ { "internalType": "uint8", "name": "power", "type": "uint8" } ],
+        "name": "feeForPower",
+        "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "uint8", "name": "power", "type": "uint8" } ],
+        "name": "mint",
+        "outputs": [],
+        "stateMutability": "payable",
         "type": "function"
       }
     ];
