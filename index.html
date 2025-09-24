@@ -2,24 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-
-  <!-- CSP: self + jsDelivr ESM, allow inline CSS/JS -->
-  <meta http-equiv="Content-Security-Policy"
-        content="
-          default-src 'self';
-          script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
-          style-src  'self' https://fonts.googleapis.com 'unsafe-inline';
-          connect-src 'self' https://rpc.testnet.soniclabs.com;
-          font-src   'self' https://fonts.gstatic.com;
-          img-src    'self' data: https://*.ardrive.net;
-        " />
-
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self';
+      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+      style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+      connect-src 'self' https://rpc.testnet.soniclabs.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https://*.ardrive.net;
+    "
+  />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Power of 10 (Testnet)</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-        rel="stylesheet" />
-
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
   <style>
     :root {
       --bg-dark: #0a0a1f;
@@ -159,7 +158,6 @@
 
 <body>
   <div class="brand">Power of 10 (Testnet)</div>
-
   <button id="wallet-button">Connect Wallet</button>
 
   <div class="banner-wrapper">
@@ -227,210 +225,66 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // 1) Sonic Testnet network params
+    // 1) Sonic Testnet params
     const TESTNET = {
-      chainId: '0x3909',                     // 14601 decimal
+      chainId: '0x3909',
       chainName: 'Sonic Testnet',
       rpcUrls: ['https://rpc.testnet.soniclabs.com'],
       nativeCurrency: { name: 'Sonic', symbol: 'S', decimals: 18 },
       blockExplorerUrls: ['https://testnet.sonicscan.org']
     };
 
-    // 2) Your deployed contracts
+    // 2) Contract addresses
     const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
     const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
 
-    // 3) Full NFT-contract ABI, including feeForPower & mint
+    // 3) NFT ABI + Enumerable
     const NFT_ABI = [
-      // standard ERC-721 events & methods...
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "approved", "type": "address" },
-          { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-        ],
-        "name": "Approval",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "operator", "type": "address" },
-          { "indexed": false, "internalType": "bool", "name": "approved", "type": "bool" }
-        ],
-        "name": "ApprovalForAll",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "to", "type": "address" },
-          { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-        ],
-        "name": "Transfer",
-        "type": "event"
-      },
-      {
-        "inputs": [
-          { "internalType": "address", "name": "to", "type": "address" },
-          { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-        ],
-        "name": "approve",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "address", "name": "owner", "type": "address" } ],
-        "name": "balanceOf",
-        "outputs": [ { "internalType": "uint256", "name": "balance", "type": "uint256" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ],
-        "name": "getApproved",
-        "outputs": [ { "internalType": "address", "name": "operator", "type": "address" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "address", "name": "owner", "type": "address" },
-          { "internalType": "address", "name": "operator", "type": "address" }
-        ],
-        "name": "isApprovedForAll",
-        "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ],
-        "name": "ownerOf",
-        "outputs": [ { "internalType": "address", "name": "owner", "type": "address" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "address", "name": "from", "type": "address" },
-          { "internalType": "address", "name": "to", "type": "address" },
-          { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-        ],
-        "name": "safeTransferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "address", "name": "from", "type": "address" },
-          { "internalType": "address", "name": "to", "type": "address" },
-          { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
-          { "internalType": "bytes", "name": "data", "type": "bytes" }
-        ],
-        "name": "safeTransferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "address", "name": "operator", "type": "address" },
-          { "internalType": "bool", "name": "approved", "type": "bool" }
-        ],
-        "name": "setApprovalForAll",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "bytes4", "name": "interfaceId", "type": "bytes4" } ],
-        "name": "supportsInterface",
-        "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "uint256", "name": "tokenId", "type": "uint256" } ],
-        "name": "tokenPower",
-        "outputs": [ { "internalType": "uint8", "name": "", "type": "uint8" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "address", "name": "from", "type": "address" },
-          { "internalType": "address", "name": "to", "type": "address" },
-          { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-        ],
-        "name": "transferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-
-      // ← Add these two methods so feeForPower & mint exist on nftContract
-      {
-        "inputs": [ { "internalType": "uint8", "name": "power", "type": "uint8" } ],
-        "name": "feeForPower",
-        "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "uint8", "name": "power", "type": "uint8" } ],
-        "name": "mint",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-      }
+      'function feeForPower(uint8) view returns (uint256)',
+      'function mint(uint8) payable',
+      'function balanceOf(address) view returns (uint256)',
+      'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
+      'function tokenPower(uint256) view returns (uint8)'
     ];
 
-    // 4) Stub ABI for staking (fill in your full interface)
+    // 4) Staking ABI (needs view functions)
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
-      'function claimRewards()'
-      // add your view functions here
+      'function claimRewards()',
+      'function stakedTokensOf(address) view returns (uint256[])',
+      'function pendingRewards(address) view returns (uint256)',
+      'function totalPowerStaked(address) view returns (uint256)'
     ];
 
-    let provider, signer;
-    let nftContract, stakingContract;
+    let provider, signer, nftContract, stakingContract, account;
 
+    // — Connect & initialize
     async function connectWallet() {
-      if (!window.ethereum) {
-        alert('Please install a Web3 wallet');
-        return;
-      }
-
+      if (!window.ethereum) return alert('Install a Web3 wallet');
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       await provider.send('eth_requestAccounts', []);
       signer = provider.getSigner();
+      account = await signer.getAddress();
 
       await switchToTestnet();
-
       const net = await provider.getNetwork();
       if (net.chainId !== parseInt(TESTNET.chainId, 16)) {
-        document.getElementById('status').textContent =
-          'Wrong network. Please switch to Sonic Testnet.';
-        return;
+        return (document.getElementById('status').textContent =
+          'Wrong network. Switch to Sonic Testnet');
       }
 
-      document.getElementById('wallet-button').textContent =
-        await signer.getAddress();
+      document.getElementById('wallet-button').textContent = account;
       document.getElementById('status').textContent = 'Connected to Testnet';
 
-      // instantiate contracts
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
 
-      initDappLogic();
+      attachHandlers();
+      await refreshUI();
     }
 
+    // — Add/Switch network
     async function switchToTestnet() {
       try {
         await window.ethereum.request({
@@ -443,35 +297,116 @@
             method: 'wallet_addEthereumChain',
             params: [TESTNET]
           });
-        } else {
-          console.error('Network switch failed', err);
         }
       }
     }
 
-    function initDappLogic() {
-      // Mint button handler
-      document.getElementById('mint-button')
-        .addEventListener('click', async () => {
-          const power = parseInt(document.getElementById('power-select').value);
-          try {
-            const cost = await nftContract.feeForPower(power);
-            const tx   = await nftContract.mint(power, { value: cost });
-            document.getElementById('status').textContent = 'Minting…';
-            await tx.wait();
-            document.getElementById('status').textContent = 'Mint successful!';
-          } catch (e) {
-            document.getElementById('status').textContent = e.message;
-          }
-        });
+    // — Wire up buttons
+    function attachHandlers() {
+      document.getElementById('mint-button').onclick = async () => {
+        const p = +document.getElementById('power-select').value;
+        try {
+          const cost = await nftContract.feeForPower(p);
+          const tx   = await nftContract.mint(p, { value: cost });
+          document.getElementById('status').textContent = 'Minting…';
+          await tx.wait();
+          document.getElementById('status').textContent = 'Mint successful!';
+          await refreshUI();
+        } catch (e) {
+          document.getElementById('status').textContent = e.message;
+        }
+      };
 
-      // TODO: Hook up stakingContract.stake, unstake, claimRewards, and
-      // populate #stake-select / #unstake-select / stats views.
+      document.getElementById('stake-button').onclick = async () => {
+        const sel = Array.from(document.getElementById('stake-select').selectedOptions)
+                         .map(o => +o.value);
+        if (!sel.length) return;
+        try {
+          document.getElementById('stake-status').textContent = 'Staking…';
+          const tx = await stakingContract.stake(sel);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Staked!';
+          await refreshUI();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('unstake-button').onclick = async () => {
+        const sel = Array.from(document.getElementById('unstake-select').selectedOptions)
+                         .map(o => +o.value);
+        if (!sel.length) return;
+        try {
+          document.getElementById('stake-status').textContent = 'Unstaking…';
+          const tx = await stakingContract.unstake(sel);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Unstaked!';
+          await refreshUI();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('claim-button').onclick = async () => {
+        try {
+          document.getElementById('stake-status').textContent = 'Claiming…';
+          const tx = await stakingContract.claimRewards();
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await refreshUI();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
     }
 
-    document
-      .getElementById('wallet-button')
-      .addEventListener('click', connectWallet);
+    // — Refresh both panels + stats
+    async function refreshUI() {
+      await populateOwned();
+      await populateStaked();
+      await updateStats();
+    }
+
+    // — List NFTs you hold
+    async function populateOwned() {
+      const bal = await nftContract.balanceOf(account);
+      const select = document.getElementById('stake-select');
+      select.innerHTML = '';
+      for (let i = 0; i < bal; i++) {
+        const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = `#${id}`;
+        select.append(opt);
+      }
+    }
+
+    // — List NFTs you’ve staked
+    async function populateStaked() {
+      const tokens = await stakingContract.stakedTokensOf(account);
+      const select = document.getElementById('unstake-select');
+      select.innerHTML = '';
+      tokens.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = `#${id}`;
+        select.append(opt);
+      });
+    }
+
+    // — Update count, power & pending rewards
+    async function updateStats() {
+      const stakedCount = (await stakingContract.stakedTokensOf(account)).length;
+      const totalPower  = await stakingContract.totalPowerStaked(account);
+      const rewards     = await stakingContract.pendingRewards(account);
+
+      document.getElementById('staked-info').textContent =
+        `Staked NFTs: ${stakedCount} | Power: ${totalPower}`;
+      document.getElementById('pending-rewards').textContent =
+        `Rewards: ${ethers.utils.formatUnits(rewards, 18)} S`;
+    }
+
+    document.getElementById('wallet-button').onclick = connectWallet;
   </script>
 </body>
 </html>
