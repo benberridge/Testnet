@@ -9,13 +9,13 @@
           default-src 'self';
           script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
           style-src  'self' https://fonts.googleapis.com 'unsafe-inline';
-          connect-src 'self' https://rpc.sonic.network https://rpc.soniclabs.com;
+          connect-src 'self' https://rpc.testnet.soniclabs.com;
           font-src   'self' https://fonts.gstatic.com;
           img-src    'self' data: https://*.ardrive.net;
         " />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Power of 10</title>
+  <title>Power of 10 (Testnet)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
         rel="stylesheet" />
@@ -46,7 +46,6 @@
       line-height: 1.4;
     }
 
-    /* Header Brand */
     .brand {
       text-align: center;
       font-size: 2.5rem;
@@ -57,7 +56,6 @@
       letter-spacing: 2px;
     }
 
-    /* Wallet Button */
     #wallet-button {
       position: fixed;
       top: var(--gap);
@@ -77,7 +75,6 @@
       color: #fff;
     }
 
-    /* Banner */
     .banner-wrapper {
       max-width: 300px;
       margin: 0 auto calc(var(--gap) * 1.5);
@@ -91,7 +88,6 @@
       height: auto;
     }
 
-    /* Grid of Cards */
     .lower-section {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -180,7 +176,6 @@
       color: var(--neon);
     }
 
-    /* Footer Socials */
     .socials {
       text-align: center;
       margin-top: var(--gap);
@@ -198,7 +193,7 @@
 </head>
 
 <body>
-  <div class="brand">Power of 10</div>
+  <div class="brand">Power of 10 (Testnet)</div>
 
   <button id="wallet-button">Connect Wallet</button>
 
@@ -260,13 +255,85 @@
 
   <div class="socials">
     <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"></a>
-    <a href="#" id="x-link"     ><img src="PATH_TO_X_ICON"     alt="X"></a>
+    <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"></a>
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
   <script type="module">
-    import * as ethers from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
-    // … your existing JS logic unchanged …
+    import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+
+    // Sonic Testnet configuration
+    const TESTNET = {
+      chainId: '0x3901',                     // 14601 decimal
+      chainName: 'Sonic Testnet',
+      rpcUrls: ['https://rpc.testnet.soniclabs.com'],
+      nativeCurrency: { name: 'Sonic', symbol: 'S', decimals: 18 },
+      blockExplorerUrls: ['https://testnet.sonicscan.org']
+    };
+
+    let provider, signer;
+
+    // Connect wallet and switch to testnet
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert('Please install a Web3 wallet');
+        return;
+      }
+
+      provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+      await provider.send('eth_requestAccounts', []);
+      signer = provider.getSigner();
+
+      await switchToTestnet();
+
+      const network = await provider.getNetwork();
+      if (network.chainId !== parseInt(TESTNET.chainId, 16)) {
+        document.getElementById('status').textContent =
+          `Wrong network. Please switch to Sonic Testnet (chainId 14601).`;
+        return;
+      }
+
+      document.getElementById('wallet-button').textContent =
+        await signer.getAddress();
+      document.getElementById('status').textContent = 'Connected to Testnet';
+      initDappLogic();
+    }
+
+    // Switch or add the Sonic Testnet chain in the wallet
+    async function switchToTestnet() {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: TESTNET.chainId }]
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [TESTNET]
+          });
+        } else {
+          console.error('Failed to switch network', switchError);
+        }
+      }
+    }
+
+    // Initialize your mint & stake logic here
+    function initDappLogic() {
+      // Example stub:
+      // const nftContract = new ethers.Contract(
+      //   YOUR_TESTNET_NFT_ADDRESS,
+      //   YOUR_NFT_ABI,
+      //   signer
+      // );
+      //
+      // Hook up #mint-button, #stake-button, etc.
+    }
+
+    document
+      .getElementById('wallet-button')
+      .addEventListener('click', connectWallet);
   </script>
 </body>
 </html>
+```
