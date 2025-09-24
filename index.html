@@ -225,7 +225,7 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // 1) Sonic Testnet params
+    // Sonic Testnet config
     const TESTNET = {
       chainId: '0x3909',
       chainName: 'Sonic Testnet',
@@ -234,20 +234,19 @@
       blockExplorerUrls: ['https://testnet.sonicscan.org']
     };
 
-    // 2) Contract addresses
+    // Contract addresses
     const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
     const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
 
-    // 3) NFT ABI + Enumerable
+    // Minimal NFT ABI with Enumerable + fee/mint
     const NFT_ABI = [
       'function feeForPower(uint8) view returns (uint256)',
       'function mint(uint8) payable',
       'function balanceOf(address) view returns (uint256)',
-      'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
-      'function tokenPower(uint256) view returns (uint8)'
+      'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)'
     ];
 
-    // 4) Staking ABI (needs view functions)
+    // Staking ABI (with view helpers)
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
@@ -257,11 +256,14 @@
       'function totalPowerStaked(address) view returns (uint256)'
     ];
 
-    let provider, signer, nftContract, stakingContract, account;
+    let provider, signer, account;
+    let nftContract, stakingContract;
 
-    // — Connect & initialize
+    // Connect wallet, switch network, init contracts & UI
     async function connectWallet() {
-      if (!window.ethereum) return alert('Install a Web3 wallet');
+      if (!window.ethereum) {
+        return alert('Please install a Web3 wallet');
+      }
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       await provider.send('eth_requestAccounts', []);
       signer = provider.getSigner();
@@ -270,8 +272,8 @@
       await switchToTestnet();
       const net = await provider.getNetwork();
       if (net.chainId !== parseInt(TESTNET.chainId, 16)) {
-        return (document.getElementById('status').textContent =
-          'Wrong network. Switch to Sonic Testnet');
+        return document.getElementById('status').textContent =
+          'Wrong network. Switch to Sonic Testnet';
       }
 
       document.getElementById('wallet-button').textContent = account;
@@ -284,7 +286,7 @@
       await refreshUI();
     }
 
-    // — Add/Switch network
+    // Network switch/add
     async function switchToTestnet() {
       try {
         await window.ethereum.request({
@@ -301,7 +303,7 @@
       }
     }
 
-    // — Wire up buttons
+    // Wire up mint, stake, unstake, claim
     function attachHandlers() {
       document.getElementById('mint-button').onclick = async () => {
         const p = +document.getElementById('power-select').value;
@@ -311,19 +313,22 @@
           document.getElementById('status').textContent = 'Minting…';
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
-          await refreshUI();
         } catch (e) {
           document.getElementById('status').textContent = e.message;
+          return;
         }
+        // refresh UI separately so any errors here won't overwrite mint status
+        refreshUI().catch(err => console.warn('UI refresh error:', err));
       };
 
       document.getElementById('stake-button').onclick = async () => {
-        const sel = Array.from(document.getElementById('stake-select').selectedOptions)
-                         .map(o => +o.value);
-        if (!sel.length) return;
+        const ids = Array.from(
+          document.getElementById('stake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
         try {
           document.getElementById('stake-status').textContent = 'Staking…';
-          const tx = await stakingContract.stake(sel);
+          const tx = await stakingContract.stake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Staked!';
           await refreshUI();
@@ -333,12 +338,13 @@
       };
 
       document.getElementById('unstake-button').onclick = async () => {
-        const sel = Array.from(document.getElementById('unstake-select').selectedOptions)
-                         .map(o => +o.value);
-        if (!sel.length) return;
+        const ids = Array.from(
+          document.getElementById('unstake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
-          const tx = await stakingContract.unstake(sel);
+          const tx = await stakingContract.unstake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Unstaked!';
           await refreshUI();
@@ -360,41 +366,38 @@
       };
     }
 
-    // — Refresh both panels + stats
+    // Refresh lists and stats
     async function refreshUI() {
       await populateOwned();
       await populateStaked();
       await updateStats();
     }
 
-    // — List NFTs you hold
     async function populateOwned() {
       const bal = await nftContract.balanceOf(account);
-      const select = document.getElementById('stake-select');
-      select.innerHTML = '';
+      const sel = document.getElementById('stake-select');
+      sel.innerHTML = '';
       for (let i = 0; i < bal; i++) {
         const id = await nftContract.tokenOfOwnerByIndex(account, i);
         const opt = document.createElement('option');
         opt.value = id;
         opt.textContent = `#${id}`;
-        select.append(opt);
+        sel.append(opt);
       }
     }
 
-    // — List NFTs you’ve staked
     async function populateStaked() {
       const tokens = await stakingContract.stakedTokensOf(account);
-      const select = document.getElementById('unstake-select');
-      select.innerHTML = '';
+      const sel = document.getElementById('unstake-select');
+      sel.innerHTML = '';
       tokens.forEach(id => {
         const opt = document.createElement('option');
         opt.value = id;
         opt.textContent = `#${id}`;
-        select.append(opt);
+        sel.append(opt);
       });
     }
 
-    // — Update count, power & pending rewards
     async function updateStats() {
       const stakedCount = (await stakingContract.stakedTokensOf(account)).length;
       const totalPower  = await stakingContract.totalPowerStaked(account);
@@ -410,3 +413,4 @@
   </script>
 </body>
 </html>
+```
