@@ -1,27 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-    http-equiv="Content-Security-Policy"
-    content="
+  <meta charset="UTF-8"/>
+  <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
       style-src  'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src   'self' https://fonts.gstatic.com;
       img-src    'self' data: https://*.ardrive.net;
-    "
-  />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    "/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>InFlow</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"/>
   <style>
     :root {
-      --bg-dark: #0a0a1f;
       --neon: #00ffe1;
       --neon-dim: rgba(0,255,225,0.2);
       --text-light: #e0e0e0;
@@ -30,128 +24,96 @@
       --gap: 1.5rem;
       --transition: 0.3s ease;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing:border-box; margin:0; padding:0 }
     body {
-      background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
-      color: var(--text-light);
-      font-family: 'Roboto', sans-serif;
-      padding: var(--gap);
-      line-height: 1.4;
+      background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
+      color:var(--text-light);
+      font-family:'Roboto',sans-serif;
+      padding:var(--gap);
+      line-height:1.4;
     }
     .brand {
-      text-align: center;
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--neon);
-      text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon);
-      margin-bottom: var(--gap);
-      letter-spacing: 2px;
+      text-align:center;
+      font-size:2.5rem;
+      font-weight:700;
+      color:var(--neon);
+      text-shadow:0 0 8px var(--neon),0 0 16px var(--neon);
+      margin-bottom:var(--gap);
+      letter-spacing:2px;
     }
     #wallet-button {
-      position: fixed;
-      top: var(--gap);
-      right: var(--gap);
-      padding: .6rem 1.2rem;
-      border: 2px solid var(--neon);
-      background: transparent;
-      color: var(--neon);
-      border-radius: var(--radius);
-      font-weight: 500;
-      cursor: pointer;
-      transition: background var(--transition), color var(--transition);
-      z-index: 10;
+      position:fixed; top:var(--gap); right:var(--gap);
+      padding:.6rem 1.2rem;
+      border:2px solid var(--neon);
+      background:transparent; color:var(--neon);
+      border-radius:var(--radius);
+      font-weight:500; cursor:pointer;
+      transition:background var(--transition),color var(--transition);
+      z-index:10;
     }
-    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
+    #wallet-button:hover { background:var(--neon-dim); color:#fff }
     .banner-wrapper {
-      max-width: 300px;
-      margin: 0 auto calc(var(--gap) * 1.5);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+      max-width:300px; margin:0 auto calc(var(--gap)*1.5);
+      border-radius:var(--radius); overflow:hidden;
+      box-shadow:0 0 20px rgba(0,0,0,0.7);
     }
-    .banner-wrapper img { display: block; width: 100%; }
+    .banner-wrapper img { width:100%; display:block }
     .lower-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: var(--gap);
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+      gap:var(--gap);
     }
     .box {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--radius);
-      padding: var(--gap);
-      display: flex;
-      flex-direction: column;
-      transition: transform var(--transition), box-shadow var(--transition);
+      background:var(--card-bg);
+      backdrop-filter:blur(12px);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:var(--radius);
+      padding:var(--gap);
+      display:flex; flex-direction:column;
+      transition:transform var(--transition),box-shadow var(--transition);
     }
     .box:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      transform:translateY(-6px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.6);
     }
     h1 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--neon);
-      text-align: center;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 4px var(--neon);
+      font-size:1.8rem; font-weight:700;
+      color:var(--neon); text-align:center;
+      margin-bottom:1rem;
+      text-shadow:0 0 4px var(--neon);
     }
     label {
-      font-weight: 500;
-      margin-bottom: .5rem;
-      color: var(--text-light);
+      font-weight:500; margin-bottom:.5rem;
+      color:var(--text-light);
     }
-    select, input {
-      width: 100%;
-      padding: .6rem;
-      margin-bottom: 1rem;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.03);
-      color: var(--text-light);
-      font-size: 1rem;
-      transition: border var(--transition);
+    select,input {
+      width:100%; padding:.6rem; margin-bottom:1rem;
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:8px;
+      background:rgba(255,255,255,0.03);
+      color:var(--text-light);
+      font-size:1rem;
+      transition:border var(--transition);
     }
-    select:focus, input:focus { outline: none; border-color: var(--neon); }
+    select:focus,input:focus { outline:none; border-color:var(--neon) }
     button {
-      padding: .75rem;
-      border: 2px solid var(--neon);
-      background: transparent;
-      color: var(--neon);
-      border-radius: 8px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background var(--transition), color var(--transition);
+      padding:.75rem; border:2px solid var(--neon);
+      background:transparent; color:var(--neon);
+      border-radius:8px; font-weight:500;
+      cursor:pointer;
+      transition:background var(--transition),color var(--transition);
     }
-    button:hover { background: var(--neon-dim); color: #fff; }
-    .form-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+    button:hover { background:var(--neon-dim); color:#fff }
+    .info { text-align:center; margin:.75rem 0; font-size:.95rem }
+    #status,#stake-status {
+      text-align:center; margin-top:.5rem;
+      min-height:1.2em; font-size:.9rem; color:var(--neon);
     }
-    .info {
-      text-align: center;
-      margin: .75rem 0;
-      font-size: .95rem;
-      color: var(--text-light);
-    }
-    #status, #stake-status {
-      text-align: center;
-      margin-top: .5rem;
-      min-height: 1.2em;
-      font-size: .9rem;
-      color: var(--neon);
-    }
-    .socials {
-      text-align: center;
-      margin-top: var(--gap);
-    }
-    .socials a { margin: 0 .5rem; display: inline-block; }
+    .socials { text-align:center; margin-top:var(--gap) }
+    .socials a { margin:0 .5rem; display:inline-block }
     .socials img {
-      width: 28px;
-      height: 28px;
-      filter: drop-shadow(0 0 4px var(--neon));
+      width:28px; height:28px;
+      filter:drop-shadow(0 0 4px var(--neon));
     }
   </style>
 </head>
@@ -162,8 +124,7 @@
   <div class="banner-wrapper">
     <img
       src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
-      alt="InFlow Banner"
-    />
+      alt="InFlow Banner"/>
   </div>
 
   <div class="lower-section">
@@ -171,18 +132,18 @@
     <div class="box">
       <h1>Mint NFT</h1>
       <div class="form-group">
-        <label for="power-select">Select Power + Price</label>
+        <label for="power-select">Select Power &amp; Price</label>
         <select id="power-select">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
+          <option value="1">1 — $S10</option>
+          <option value="2">2 — $S20</option>
+          <option value="3">3 — $S30</option>
+          <option value="4">4 — $S40</option>
+          <option value="5">5 — $S50</option>
+          <option value="6">6 — $S60</option>
+          <option value="7">7 — $S70</option>
+          <option value="8">8 — $S80</option>
+          <option value="9">9 — $S90</option>
+          <option value="10">10 — $S100</option>
         </select>
         <button id="mint-button">Mint Now</button>
       </div>
@@ -224,26 +185,22 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
-    const STAKING_ADDRESS = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
+    const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS   = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
     const REQUIRED_CHAIN_ID = 14601;
 
-    // full ABI including approval methods
     const NFT_ABI = [
       {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},
       {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},
       {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},
       {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},
       {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function"},
       {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
       {"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
       {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"}
+      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
     ];
 
     const STAKING_ABI = [
@@ -255,10 +212,8 @@
       'function totalPowerStaked(address) view returns (uint256)'
     ];
 
-    let provider, signer, account;
-    let nftContract, stakingContract;
+    let provider, signer, account, nftContract, stakingContract;
 
-    // disable mint until network confirmed
     document.getElementById('mint-button').disabled = true;
 
     async function connectWallet() {
@@ -271,10 +226,7 @@
     }
 
     async function handleAccountsChanged(accounts) {
-      if (!accounts || accounts.length === 0) {
-        disconnect();
-        return;
-      }
+      if (!accounts || accounts.length === 0) return disconnect();
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       signer   = provider.getSigner();
       account  = await signer.getAddress();
@@ -301,8 +253,9 @@
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
 
       attachHandlers();
-      await updatePowerOptions();
-      await refreshUI();
+      await populateOwned();
+      await populateStaked();
+      await updateStats();
     }
 
     function disconnect() {
@@ -317,13 +270,7 @@
       document.getElementById('stake-status').textContent  = '';
     }
 
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('disconnect', disconnect);
-    }
-
     function attachHandlers() {
-      // Mint
       document.getElementById('mint-button').onclick = async () => {
         const p = +document.getElementById('power-select').value;
         try {
@@ -335,10 +282,8 @@
         } catch (e) {
           document.getElementById('status').textContent = e.message;
         }
-        refreshUI();
       };
 
-      // Stake with approval
       document.getElementById('stake-button').onclick = async () => {
         const ids = Array.from(
           document.getElementById('stake-select').selectedOptions
@@ -349,22 +294,20 @@
           document.getElementById('stake-status').textContent = 'Checking approval…';
           const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
           if (!approved) {
-            document.getElementById('stake-status').textContent = 'Approving…';
-            const approveTx = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
-            await approveTx.wait();
+            const tx = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
+            await tx.wait();
           }
-
           document.getElementById('stake-status').textContent = 'Staking…';
-          const tx = await stakingContract.stake(ids);
-          await tx.wait();
+          const tx2 = await stakingContract.stake(ids);
+          await tx2.wait();
           document.getElementById('stake-status').textContent = 'Staked!';
-          refreshUI();
+          await populateStaked();
+          await updateStats();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
         }
       };
 
-      // Unstake
       document.getElementById('unstake-button').onclick = async () => {
         const ids = Array.from(
           document.getElementById('unstake-select').selectedOptions
@@ -376,40 +319,24 @@
           const tx = await stakingContract.unstake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Unstaked!';
-          refreshUI();
+          await populateStaked();
+          await updateStats();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
         }
       };
 
-      // Claim
       document.getElementById('claim-button').onclick = async () => {
         try {
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Claimed!';
-          refreshUI();
+          await updateStats();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
         }
       };
-    }
-
-    async function updatePowerOptions() {
-      const sel = document.getElementById('power-select');
-      for (let o of sel.options) {
-        const p = +o.value;
-        const costWei = await nftContract.feeForPower(p);
-        const cost = ethers.utils.formatEther(costWei);
-        o.textContent = `${p} — $S${cost}`;
-      }
-    }
-
-    async function refreshUI() {
-      try { await populateOwned(); } catch {}
-      try { await populateStaked(); } catch {}
-      try { await updateStats(); } catch {}
     }
 
     async function populateOwned() {
@@ -439,13 +366,13 @@
     }
 
     async function updateStats() {
-      const stArr   = await stakingContract.stakedTokensOf(account);
-      const power   = await stakingContract.totalPowerStaked(account);
-      const rewards = await stakingContract.pendingRewards(account);
-      document.getElementById('staked-info').textContent   =
-        `Staked NFTs: ${stArr.length} | Power: ${power}`;
+      const st = await stakingContract.stakedTokensOf(account);
+      const pow = await stakingContract.totalPowerStaked(account);
+      const rew = await stakingContract.pendingRewards(account);
+      document.getElementById('staked-info').textContent =
+        `Staked NFTs: ${st.length} | Power: ${pow}`;
       document.getElementById('pending-rewards').textContent =
-        `Rewards: ${ethers.utils.formatUnits(rewards,18)} S`;
+        `Rewards: ${ethers.utils.formatUnits(rew, 18)} S`;
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
