@@ -171,9 +171,9 @@
     <div class="box">
       <h1>Mint NFT</h1>
       <div class="form-group">
-        <label for="power-select">Select Power</label>
+        <label for="power-select">Select Power + Price</label>
         <select id="power-select">
-          <option value="1" selected>1</option>
+          <option value="1">1</option>
           <option value="2">2</option>
           <option value="3">3</option>
           <option value="4">4</option>
@@ -193,7 +193,7 @@
     <div class="box">
       <h1>Stake &amp; Unstake</h1>
       <div class="form-group">
-        <label for="stake-select">Your NFTs</label>
+        <label for="stake-select">Your NFTs (Power)</label>
         <select id="stake-select" multiple size="5"></select>
         <button id="stake-button">Stake Selected</button>
       </div>
@@ -224,47 +224,26 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
-    const STAKING_ADDRESS   = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
+    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
     const REQUIRED_CHAIN_ID = 14601;
 
+    // full ABI including approval methods
     const NFT_ABI = [
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "owner",   "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "approved","type": "address" },
-          { "indexed": true, "internalType": "uint256","name": "tokenId", "type": "uint256" }
-        ],
-        "name":"Approval","type":"event"
-      },
-      {
-        "anonymous":false,
-        "inputs":[
-          { "indexed":true,"internalType":"address","name":"owner","type":"address" },
-          { "indexed":true,"internalType":"address","name":"operator","type":"address" },
-          { "indexed":false,"internalType":"bool","name":"approved","type":"bool" }
-        ],
-        "name":"ApprovalForAll","type":"event"
-      },
-      {
-        "anonymous":false,
-        "inputs":[
-          { "indexed":true,"internalType":"address","name":"from","type":"address" },
-          { "indexed":true,"internalType":"address","name":"to","type":"address" },
-          { "indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256" }
-        ],
-        "name":"Transfer","type":"event"
-      },
-      { "inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function" },
-      { "inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function" },
-      { "inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function" }
+      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},
+      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},
+      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},
+      {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"}
     ];
 
     const STAKING_ABI = [
@@ -308,7 +287,7 @@
             params: [{ chainId: '0x3929' }]
           });
           return handleAccountsChanged(accounts);
-        } catch (err) {
+        } catch {
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
         }
@@ -322,7 +301,8 @@
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
 
       attachHandlers();
-      refreshUI();
+      await updatePowerOptions();
+      await refreshUI();
     }
 
     function disconnect() {
@@ -416,10 +396,20 @@
       };
     }
 
+    async function updatePowerOptions() {
+      const sel = document.getElementById('power-select');
+      for (let o of sel.options) {
+        const p = +o.value;
+        const costWei = await nftContract.feeForPower(p);
+        const cost = ethers.utils.formatEther(costWei);
+        o.textContent = `${p} — $S${cost}`;
+      }
+    }
+
     async function refreshUI() {
-      try { await populateOwned(); }   catch {}
-      try { await populateStaked(); }  catch {}
-      try { await updateStats(); }     catch {}
+      try { await populateOwned(); } catch {}
+      try { await populateStaked(); } catch {}
+      try { await updateStats(); } catch {}
     }
 
     async function populateOwned() {
@@ -428,9 +418,10 @@
       const bal = await nftContract.balanceOf(account);
       for (let i = 0; i < bal; i++) {
         const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const p  = await nftContract.tokenPower(id);
         const o  = document.createElement('option');
         o.value  = id.toString();
-        o.textContent = `#${id}`;
+        o.textContent = `#${id} (Power: ${p})`;
         sel.append(o);
       }
     }
@@ -451,8 +442,10 @@
       const stArr   = await stakingContract.stakedTokensOf(account);
       const power   = await stakingContract.totalPowerStaked(account);
       const rewards = await stakingContract.pendingRewards(account);
-      document.getElementById('staked-info').textContent   = `Staked NFTs: ${stArr.length} | Power: ${power}`;
-      document.getElementById('pending-rewards').textContent = `Rewards: ${ethers.utils.formatUnits(rewards,18)} S`;
+      document.getElementById('staked-info').textContent   =
+        `Staked NFTs: ${stArr.length} | Power: ${power}`;
+      document.getElementById('pending-rewards').textContent =
+        `Rewards: ${ethers.utils.formatUnits(rewards,18)} S`;
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
