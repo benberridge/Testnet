@@ -228,50 +228,9 @@
     const STAKING_ADDRESS   = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
     const REQUIRED_CHAIN_ID = 14601;
 
-    // Full InFlow NFT ABI (with events + tokenPower + ERC721Enumerable)
     const NFT_ABI = [
-      // events
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "approved", "type": "address" },
-          { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-        ],
-        "name": "Approval", "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "operator", "type": "address" },
-          { "indexed": false, "internalType": "bool",    "name": "approved", "type": "bool" }
-        ],
-        "name": "ApprovalForAll", "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
-          { "indexed": true, "internalType": "address", "name": "to",   "type": "address" },
-          { "indexed": true, "internalType": "uint256","name": "tokenId", "type": "uint256" }
-        ],
-        "name": "Transfer", "type": "event"
-      },
-      // standard ERC-721
-      { "inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function" },
-      { "inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function" },
-      { "inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function" },
-      // enumerable
-      { "inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function" },
-      // custom power + minting
-      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function" },
-      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function" }
+      // … your NFT ABI …
     ];
-
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
@@ -284,17 +243,23 @@
     let provider, signer, account;
     let nftContract, stakingContract;
 
-    // disable mint until we confirm network
+    // disable mint until network confirmed
     document.getElementById('mint-button').disabled = true;
 
     async function connectWallet() {
-      if (!window.ethereum) return alert('Please install a Web3 wallet');
+      if (!window.ethereum) {
+        alert('Please install a Web3 wallet');
+        return;
+      }
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       handleAccountsChanged(accounts);
     }
 
     async function handleAccountsChanged(accounts) {
-      if (!accounts || accounts.length === 0) return disconnect();
+      if (!accounts || accounts.length === 0) {
+        disconnect();
+        return;
+      }
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       signer   = provider.getSigner();
       account  = await signer.getAddress();
@@ -306,24 +271,23 @@
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x3929' }] // 14601 in hex
           });
-          // once switched, re-run
+          // re-run once switched
           return handleAccountsChanged(accounts);
-        } catch (switchError) {
+        } catch (err) {
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
         }
       }
 
-      // correct network
       document.getElementById('wallet-button').textContent = '…' + account.slice(-4);
-      document.getElementById('status').textContent         = 'Connected';
-      document.getElementById('mint-button').disabled       = false;
+      document.getElementById('status').textContent        = 'Connected';
+      document.getElementById('mint-button').disabled      = false;
 
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
 
       attachHandlers();
-      await refreshUI();
+      refreshUI();
     }
 
     function disconnect() {
@@ -334,7 +298,7 @@
       document.getElementById('stake-select').innerHTML    = '';
       document.getElementById('unstake-select').innerHTML  = '';
       document.getElementById('staked-info').textContent   = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent= 'Rewards: 0 S';
+      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
       document.getElementById('stake-status').textContent  = '';
     }
 
@@ -344,6 +308,7 @@
     }
 
     function attachHandlers() {
+      // Mint
       document.getElementById('mint-button').onclick = async () => {
         const p = +document.getElementById('power-select').value;
         try {
@@ -354,46 +319,62 @@
           document.getElementById('status').textContent = 'Mint successful!';
         } catch (e) {
           document.getElementById('status').textContent = e.message;
-          return;
         }
-        refreshUI().catch(console.warn);
+        refreshUI();
       };
 
+      // Stake with approval check
       document.getElementById('stake-button').onclick = async () => {
-        const ids = Array.from(document.getElementById('stake-select').selectedOptions).map(o => +o.value);
+        const ids = Array.from(
+          document.getElementById('stake-select').selectedOptions
+        ).map(o => +o.value);
         if (!ids.length) return;
+
         try {
+          document.getElementById('stake-status').textContent = 'Checking approval…';
+          const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
+          if (!approved) {
+            document.getElementById('stake-status').textContent = 'Approving…';
+            const approveTx = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
+            await approveTx.wait();
+          }
+
           document.getElementById('stake-status').textContent = 'Staking…';
           const tx = await stakingContract.stake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Staked!';
-          await refreshUI();
+          refreshUI();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
         }
       };
 
+      // Unstake
       document.getElementById('unstake-button').onclick = async () => {
-        const ids = Array.from(document.getElementById('unstake-select').selectedOptions).map(o => +o.value);
+        const ids = Array.from(
+          document.getElementById('unstake-select').selectedOptions
+        ).map(o => +o.value);
         if (!ids.length) return;
+
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
           const tx = await stakingContract.unstake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Unstaked!';
-          await refreshUI();
+          refreshUI();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
         }
       };
 
+      // Claim
       document.getElementById('claim-button').onclick = async () => {
         try {
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Claimed!';
-          await refreshUI();
+          refreshUI();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
         }
@@ -401,9 +382,9 @@
     }
 
     async function refreshUI() {
-      try { await populateOwned(); }   catch(e){ console.warn(e) }
-      try { await populateStaked(); }  catch(e){ console.warn(e) }
-      try { await updateStats(); }     catch(e){ console.warn(e) }
+      try { await populateOwned(); }   catch {}
+      try { await populateStaked(); }  catch {}
+      try { await updateStats(); }     catch {}
     }
 
     async function populateOwned() {
@@ -436,7 +417,7 @@
       const power   = await stakingContract.totalPowerStaked(account);
       const rewards = await stakingContract.pendingRewards(account);
       document.getElementById('staked-info').textContent   = `Staked NFTs: ${stArr.length} | Power: ${power}`;
-      document.getElementById('pending-rewards').textContent= `Rewards: ${ethers.utils.formatUnits(rewards,18)} S`;
+      document.getElementById('pending-rewards').textContent = `Rewards: ${ethers.utils.formatUnits(rewards,18)} S`;
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
