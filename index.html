@@ -69,7 +69,7 @@
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0,0,0,0.7);
     }
-    .banner-wrapper img { display: block; width: 100%; height: auto; }
+    .banner-wrapper img { display: block; width: 100%; }
     .lower-section {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -222,20 +222,57 @@
   </div>
 
   <script type="module">
-    import { ethers } from 
-      'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+    import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // Your deployed contracts
-    const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
-    const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
+    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
+    const REQUIRED_CHAIN_ID = 14601;
 
-    // Minimal ABIs
+    // Full InFlow NFT ABI (with events + tokenPower + ERC721Enumerable)
     const NFT_ABI = [
-      'function feeForPower(uint8) view returns (uint256)',
-      'function mint(uint8) payable',
-      'function balanceOf(address) view returns (uint256)',
-      'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)'
+      // events
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "approved", "type": "address" },
+          { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+        ],
+        "name": "Approval", "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "operator", "type": "address" },
+          { "indexed": false, "internalType": "bool",    "name": "approved", "type": "bool" }
+        ],
+        "name": "ApprovalForAll", "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "to",   "type": "address" },
+          { "indexed": true, "internalType": "uint256","name": "tokenId", "type": "uint256" }
+        ],
+        "name": "Transfer", "type": "event"
+      },
+      // standard ERC-721
+      { "inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function" },
+      { "inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function" },
+      { "inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function" },
+      { "inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function" },
+      { "inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function" },
+      { "inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function" },
+      // enumerable
+      { "inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function" },
+      // custom power + minting
+      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function" },
+      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function" },
+      { "inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function" }
     ];
+
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
@@ -245,43 +282,28 @@
       'function totalPowerStaked(address) view returns (uint256)'
     ];
 
-    // 14601 decimal = 0x3909 testnet chain
-    const REQUIRED_CHAIN_ID = 14601;
-
     let provider, signer, account;
     let nftContract, stakingContract;
 
-    // Connect & handle accounts
     async function connectWallet() {
-      if (!window.ethereum) {
-        return alert('Please install a Web3 wallet');
-      }
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
+      if (!window.ethereum) return alert('Please install a Web3 wallet');
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       handleAccountsChanged(accounts);
     }
 
     async function handleAccountsChanged(accounts) {
-      if (!accounts || accounts.length === 0) {
-        return disconnect();
-      }
-
+      if (!accounts || accounts.length === 0) return disconnect();
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       signer   = provider.getSigner();
       account  = await signer.getAddress();
 
-      // Check network
       const net = await provider.getNetwork();
       if (net.chainId !== REQUIRED_CHAIN_ID) {
-        document.getElementById('status').textContent =
-          'Wrong network. Please switch to Sonic Testnet';
+        document.getElementById('status').textContent = 'Wrong network. Switch to Sonic Testnet';
         return;
       }
 
-      // Show only last 4 chars
-      document.getElementById('wallet-button').textContent =
-        '…' + account.slice(-4);
+      document.getElementById('wallet-button').textContent = '…' + account.slice(-4);
       document.getElementById('status').textContent = 'Connected';
 
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
@@ -292,10 +314,7 @@
     }
 
     function disconnect() {
-      account = null;
-      signer = null;
-      nftContract = null;
-      stakingContract = null;
+      account = signer = nftContract = stakingContract = null;
       document.getElementById('wallet-button').textContent = 'Connect Wallet';
       document.getElementById('status').textContent = 'Disconnected';
       document.getElementById('stake-select').innerHTML = '';
@@ -305,13 +324,11 @@
       document.getElementById('stake-status').textContent = '';
     }
 
-    // Detect account changes & disconnect
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       window.ethereum.on('disconnect', disconnect);
     }
 
-    // Button handlers
     function attachHandlers() {
       document.getElementById('mint-button').onclick = async () => {
         const p = +document.getElementById('power-select').value;
@@ -329,9 +346,7 @@
       };
 
       document.getElementById('stake-button').onclick = async () => {
-        const ids = Array.from(
-          document.getElementById('stake-select').selectedOptions
-        ).map(o => +o.value);
+        const ids = Array.from(document.getElementById('stake-select').selectedOptions).map(o => +o.value);
         if (!ids.length) return;
         try {
           document.getElementById('stake-status').textContent = 'Staking…';
@@ -345,9 +360,7 @@
       };
 
       document.getElementById('unstake-button').onclick = async () => {
-        const ids = Array.from(
-          document.getElementById('unstake-select').selectedOptions
-        ).map(o => +o.value);
+        const ids = Array.from(document.getElementById('unstake-select').selectedOptions).map(o => +o.value);
         if (!ids.length) return;
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
@@ -373,39 +386,25 @@
       };
     }
 
-    // Refresh panels
     async function refreshUI() {
-      try { await populateOwned();   } catch(e){ console.warn(e) }
-      try { await populateStaked();  } catch(e){ console.warn(e) }
-      try { await updateStats();     } catch(e){ console.warn(e) }
+      try { await populateOwned(); } catch(e){ console.warn(e) }
+      try { await populateStaked(); } catch(e){ console.warn(e) }
+      try { await updateStats(); } catch(e){ console.warn(e) }
     }
 
-    // Populate owned NFT IDs
     async function populateOwned() {
       const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
-      let ids = [];
-      try {
-        const bal = await nftContract.balanceOf(account);
-        for (let i = 0; i < bal; i++) {
-          ids.push((await nftContract.tokenOfOwnerByIndex(account, i)).toString());
-        }
-      } catch {
-        // fallback via on-chain logs
-        const zero = ethers.constants.AddressZero;
-        const filter = nftContract.filters.Transfer(zero, account);
-        const logs = await nftContract.queryFilter(filter, 0, 'latest');
-        ids = logs.map(log => log.args.tokenId.toString());
-      }
-      ids.forEach(id => {
-        const o = document.createElement('option');
-        o.value = id;
+      const bal = await nftContract.balanceOf(account);
+      for (let i = 0; i < bal; i++) {
+        const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const o  = document.createElement('option');
+        o.value  = id.toString();
         o.textContent = `#${id}`;
         sel.append(o);
-      });
+      }
     }
 
-    // Populate staked NFT IDs
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
@@ -418,15 +417,12 @@
       });
     }
 
-    // Update counts, power & rewards
     async function updateStats() {
-      const stArr      = await stakingContract.stakedTokensOf(account);
-      const totalPower = await stakingContract.totalPowerStaked(account);
-      const rewards    = await stakingContract.pendingRewards(account);
-      document.getElementById('staked-info').textContent =
-        `Staked NFTs: ${stArr.length} | Power: ${totalPower}`;
-      document.getElementById('pending-rewards').textContent =
-        `Rewards: ${ethers.utils.formatUnits(rewards, 18)} S`;
+      const stArr  = await stakingContract.stakedTokensOf(account);
+      const power  = await stakingContract.totalPowerStaked(account);
+      const rewards= await stakingContract.pendingRewards(account);
+      document.getElementById('staked-info').textContent  = `Staked NFTs: ${stArr.length} | Power: ${power}`;
+      document.getElementById('pending-rewards').textContent = `Rewards: ${ethers.utils.formatUnits(rewards,18)} S`;
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
