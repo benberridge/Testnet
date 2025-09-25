@@ -155,7 +155,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="brand">Power of 10 (Testnet)</div>
   <button id="wallet-button">Connect Wallet</button>
@@ -225,7 +224,7 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // Sonic Testnet config
+    // Sonic Testnet network params
     const TESTNET = {
       chainId: '0x3909',
       chainName: 'Sonic Testnet',
@@ -238,7 +237,7 @@
     const NFT_ADDRESS     = '0x26DFE5fD6820adEc0e901D4CCFef490ddf58D79C';
     const STAKING_ADDRESS = '0x72894C00416CaEEDe08e791aCfA565293ff38CcC';
 
-    // Minimal NFT ABI with Enumerable + fee/mint
+    // NFT ABI with feeForPower/mint + balance & optional enumerable
     const NFT_ABI = [
       'function feeForPower(uint8) view returns (uint256)',
       'function mint(uint8) payable',
@@ -246,7 +245,7 @@
       'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)'
     ];
 
-    // Staking ABI (with view helpers)
+    // Staking ABI including view helpers
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
@@ -259,26 +258,35 @@
     let provider, signer, account;
     let nftContract, stakingContract;
 
-    // Connect wallet, switch network, init contracts & UI
+    // 1) Connect wallet & switch network
     async function connectWallet() {
       if (!window.ethereum) {
         return alert('Please install a Web3 wallet');
       }
-      provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
-      await provider.send('eth_requestAccounts', []);
-      signer = provider.getSigner();
-      account = await signer.getAddress();
 
+      // 1a) Request accounts
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      // 1b) Setup provider + signer
+      provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+      signer   = provider.getSigner();
+      account  = await signer.getAddress();
+
+      // 1c) Ensure on Sonic Testnet
       await switchToTestnet();
       const net = await provider.getNetwork();
       if (net.chainId !== parseInt(TESTNET.chainId, 16)) {
-        return document.getElementById('status').textContent =
+        document.getElementById('status').textContent =
           'Wrong network. Switch to Sonic Testnet';
+        return;
       }
 
-      document.getElementById('wallet-button').textContent = account;
+      // 1d) Show only last 4 chars of address
+      const last4 = account.slice(-4);
+      document.getElementById('wallet-button').textContent = '…' + last4;
       document.getElementById('status').textContent = 'Connected to Testnet';
 
+      // 1e) Instantiate contracts
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
 
@@ -286,7 +294,7 @@
       await refreshUI();
     }
 
-    // Network switch/add
+    // 2) Add / switch network in wallet
     async function switchToTestnet() {
       try {
         await window.ethereum.request({
@@ -303,13 +311,13 @@
       }
     }
 
-    // Wire up mint, stake, unstake, claim
+    // 3) Wire up mint / stake / unstake / claim
     function attachHandlers() {
       document.getElementById('mint-button').onclick = async () => {
-        const p = +document.getElementById('power-select').value;
+        const power = +document.getElementById('power-select').value;
         try {
-          const cost = await nftContract.feeForPower(p);
-          const tx   = await nftContract.mint(p, { value: cost });
+          const cost = await nftContract.feeForPower(power);
+          const tx   = await nftContract.mint(power, { value: cost });
           document.getElementById('status').textContent = 'Minting…';
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
@@ -317,8 +325,8 @@
           document.getElementById('status').textContent = e.message;
           return;
         }
-        // refresh UI separately so any errors here won't overwrite mint status
-        refreshUI().catch(err => console.warn('UI refresh error:', err));
+        // Refresh UI but don’t overwrite mint status on error
+        refreshUI().catch(console.warn);
       };
 
       document.getElementById('stake-button').onclick = async () => {
@@ -366,31 +374,38 @@
       };
     }
 
-    // Refresh lists and stats
+    // 4) Refresh all lists & stats
     async function refreshUI() {
       await populateOwned();
       await populateStaked();
       await updateStats();
     }
 
-    async function populateOwned() {
-      const bal = await nftContract.balanceOf(account);
-      const sel = document.getElementById('stake-select');
-      sel.innerHTML = '';
-      for (let i = 0; i < bal; i++) {
-        const id = await nftContract.tokenOfOwnerByIndex(account, i);
-        const opt = document.createElement('option');
-        opt.value = id;
-        opt.textContent = `#${id}`;
-        sel.append(opt);
+    // 4a) Get your owned IDs, fallback to Transfer events if enumerable missing
+    async function getOwnedTokenIds() {
+      try {
+        const bal = await nftContract.balanceOf(account);
+        const ids = [];
+        for (let i = 0; i < bal; i++) {
+          const id = await nftContract.tokenOfOwnerByIndex(account, i);
+          ids.push(id.toString());
+        }
+        return ids;
+      } catch {
+        // fallback: read mint Transfer(address(0), you)
+        const zero = ethers.constants.AddressZero;
+        const filter = nftContract.filters.Transfer(zero, account);
+        const logs = await nftContract.queryFilter(filter, 0, 'latest');
+        return logs.map(log => log.args.tokenId.toString());
       }
     }
 
-    async function populateStaked() {
-      const tokens = await stakingContract.stakedTokensOf(account);
-      const sel = document.getElementById('unstake-select');
+    // 4b) Fill “Your NFTs”
+    async function populateOwned() {
+      const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
-      tokens.forEach(id => {
+      const ids = await getOwnedTokenIds();
+      ids.forEach(id => {
         const opt = document.createElement('option');
         opt.value = id;
         opt.textContent = `#${id}`;
@@ -398,13 +413,27 @@
       });
     }
 
+    // 4c) Fill “Staked NFTs”
+    async function populateStaked() {
+      const sel = document.getElementById('unstake-select');
+      sel.innerHTML = '';
+      const staked = await stakingContract.stakedTokensOf(account);
+      staked.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id.toString();
+        opt.textContent = `#${id}`;
+        sel.append(opt);
+      });
+    }
+
+    // 4d) Update counts, power & rewards
     async function updateStats() {
-      const stakedCount = (await stakingContract.stakedTokensOf(account)).length;
+      const stakedArr = await stakingContract.stakedTokensOf(account);
       const totalPower  = await stakingContract.totalPowerStaked(account);
       const rewards     = await stakingContract.pendingRewards(account);
 
       document.getElementById('staked-info').textContent =
-        `Staked NFTs: ${stakedCount} | Power: ${totalPower}`;
+        `Staked NFTs: ${stakedArr.length} | Power: ${totalPower}`;
       document.getElementById('pending-rewards').textContent =
         `Rewards: ${ethers.utils.formatUnits(rewards, 18)} S`;
     }
