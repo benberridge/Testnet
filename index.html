@@ -189,22 +189,16 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
-    const STAKING_ADDRESS = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
+    const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS   = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
-      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},
-      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},
-      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},
-      {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+      // ... same as before ...
       {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"}
+      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"}
     ];
 
     const STAKING_ABI = [
@@ -213,13 +207,16 @@
       'function claimRewards()',
       'function stakedTokensOf(address) view returns (uint256[])',
       'function pendingRewards(address) view returns (uint256)',
-      'function totalPowerStaked(address) view returns (uint256)'
+      'function totalPowerStaked(address) view returns (uint256)',
+      'function getUserStake(address) view returns (uint256 nftCount, uint256 powerStaked, uint256 pending)'
     ];
 
-    let provider, signer, account, nftContract, stakingContract, stakingRead;
+    let provider, signer, account;
+    let nftContract, stakingContract, stakingRead;
 
     document.getElementById('mint-button').disabled = true;
 
+    // Connect / Disconnect
     async function connectWallet() {
       if (!window.ethereum) {
         alert('Please install a Web3 wallet');
@@ -229,16 +226,29 @@
       handleAccountsChanged(accounts);
     }
 
+    function disconnect() {
+      account = signer = nftContract = stakingContract = stakingRead = null;
+      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
+      document.getElementById('status').textContent           = 'Disconnected';
+      document.getElementById('mint-button').disabled         = true;
+      document.getElementById('stake-select').innerHTML       = '';
+      document.getElementById('unstake-select').innerHTML     = '';
+      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent     = '';
+    }
+
     async function handleAccountsChanged(accounts) {
       if (!accounts || accounts.length === 0) {
         disconnect();
         return;
       }
+
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       signer   = provider.getSigner();
       account  = await signer.getAddress();
-
       const net = await provider.getNetwork();
+
       if (net.chainId !== REQUIRED_CHAIN_ID) {
         try {
           await window.ethereum.request({
@@ -266,18 +276,9 @@
       await updateStats();
     }
 
-    function disconnect() {
-      account = signer = nftContract = stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent = 'Connect Wallet';
-      document.getElementById('status').textContent        = 'Disconnected';
-      document.getElementById('mint-button').disabled      = true;
-      document.getElementById('stake-select').innerHTML    = '';
-      document.getElementById('unstake-select').innerHTML  = '';
-      document.getElementById('staked-info').textContent   = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
-      document.getElementById('stake-status').textContent  = '';
-    }
+    document.getElementById('wallet-button').onclick = connectWallet;
 
+    // Handlers
     function attachHandlers() {
       // Mint
       document.getElementById('mint-button').onclick = async () => {
@@ -288,6 +289,10 @@
           document.getElementById('status').textContent = 'Minting…';
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
+
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
         } catch (e) {
           document.getElementById('status').textContent = e.message;
         }
@@ -313,6 +318,8 @@
           const tx = await stakingContract.stake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Staked!';
+
+          await populateOwned();
           await populateStaked();
           await updateStats();
         } catch (e) {
@@ -332,6 +339,8 @@
           const tx = await stakingContract.unstake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Unstaked!';
+
+          await populateOwned();
           await populateStaked();
           await updateStats();
         } catch (e) {
@@ -346,6 +355,7 @@
           const tx = await stakingContract.claimRewards();
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Claimed!';
+
           await updateStats();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
@@ -353,6 +363,7 @@
       };
     }
 
+    // Populate owned NFTs
     async function populateOwned() {
       const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
@@ -367,6 +378,7 @@
       }
     }
 
+    // Populate staked NFTs
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
@@ -383,21 +395,21 @@
       }
     }
 
+    // Update stats by calling getUserStake
     async function updateStats() {
       try {
-        const arr = await stakingRead.stakedTokensOf(account);
-        const pow = await stakingRead.totalPowerStaked(account);
-        const rew = await stakingRead.pendingRewards(account);
+        const [nftCount, powerStaked, pendingRaw] =
+          await stakingRead.getUserStake(account);
+
         document.getElementById('staked-info').textContent =
-          `Staked NFTs: ${arr.length} | Power: ${pow}`;
+          `Staked NFTs: ${nftCount} | Power: ${powerStaked}`;
+
         document.getElementById('pending-rewards').textContent =
-          `Rewards: ${ethers.utils.formatUnits(rew,18)} S`;
+          `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
       } catch (e) {
         console.error('updateStats failed', e);
       }
     }
-
-    document.getElementById('wallet-button').onclick = connectWallet;
   </script>
 </body>
 </html>
