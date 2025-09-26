@@ -194,29 +194,31 @@
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
-      // ... same as before ...
-      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"feeForPower","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint8","name":"power","type":"uint8"}],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenPower","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"}
+      "function balanceOf(address owner) view returns (uint256)",
+      "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+      "function tokenPower(uint256 tokenId) view returns (uint8)",
+      "function feeForPower(uint8 power) view returns (uint256)",
+      "function mint(uint8 power) payable",
+      "function isApprovedForAll(address owner, address operator) view returns (bool)",
+      "function setApprovalForAll(address operator, bool approved)"
     ];
 
     const STAKING_ABI = [
-      'function stake(uint256[])',
-      'function unstake(uint256[])',
-      'function claimRewards()',
-      'function stakedTokensOf(address) view returns (uint256[])',
-      'function pendingRewards(address) view returns (uint256)',
-      'function totalPowerStaked(address) view returns (uint256)',
-      'function getUserStake(address) view returns (uint256 nftCount, uint256 powerStaked, uint256 pending)'
+      "function stake(uint256[])",
+      "function unstake(uint256[])",
+      "function claimRewards()",
+      "function stakedTokensOf(address) view returns (uint256[])",
+      "function pendingRewards(address) view returns (uint256)",
+      "function totalPowerStaked(address) view returns (uint256)",
+      "function getUserStake(address) view returns (uint256 nftCount, uint256 powerStaked, uint256 pending)"
     ];
 
     let provider, signer, account;
     let nftContract, stakingContract, stakingRead;
 
     document.getElementById('mint-button').disabled = true;
+    document.getElementById('claim-button').disabled = true;
 
-    // Connect / Disconnect
     async function connectWallet() {
       if (!window.ethereum) {
         alert('Please install a Web3 wallet');
@@ -236,6 +238,7 @@
       document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
       document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
       document.getElementById('stake-status').textContent     = '';
+      document.getElementById('claim-button').disabled        = true;
     }
 
     async function handleAccountsChanged(accounts) {
@@ -265,6 +268,7 @@
       document.getElementById('wallet-button').textContent = '…' + account.slice(-4);
       document.getElementById('status').textContent        = 'Connected';
       document.getElementById('mint-button').disabled      = false;
+      document.getElementById('claim-button').disabled     = false;
 
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
@@ -278,9 +282,7 @@
 
     document.getElementById('wallet-button').onclick = connectWallet;
 
-    // Handlers
     function attachHandlers() {
-      // Mint
       document.getElementById('mint-button').onclick = async () => {
         const p = +document.getElementById('power-select').value;
         try {
@@ -289,7 +291,6 @@
           document.getElementById('status').textContent = 'Minting…';
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
-
           await populateOwned();
           await populateStaked();
           await updateStats();
@@ -298,7 +299,6 @@
         }
       };
 
-      // Stake
       document.getElementById('stake-button').onclick = async () => {
         const ids = Array.from(
           document.getElementById('stake-select').selectedOptions
@@ -318,7 +318,6 @@
           const tx = await stakingContract.stake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Staked!';
-
           await populateOwned();
           await populateStaked();
           await updateStats();
@@ -327,7 +326,6 @@
         }
       };
 
-      // Unstake
       document.getElementById('unstake-button').onclick = async () => {
         const ids = Array.from(
           document.getElementById('unstake-select').selectedOptions
@@ -339,7 +337,6 @@
           const tx = await stakingContract.unstake(ids);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Unstaked!';
-
           await populateOwned();
           await populateStaked();
           await updateStats();
@@ -348,14 +345,12 @@
         }
       };
 
-      // Claim
       document.getElementById('claim-button').onclick = async () => {
         try {
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Claimed!';
-
           await updateStats();
         } catch (e) {
           document.getElementById('stake-status').textContent = e.message;
@@ -363,7 +358,6 @@
       };
     }
 
-    // Populate owned NFTs
     async function populateOwned() {
       const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
@@ -378,7 +372,6 @@
       }
     }
 
-    // Populate staked NFTs
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
@@ -395,14 +388,13 @@
       }
     }
 
-    // Update stats by calling getUserStake
     async function updateStats() {
       try {
         const [nftCount, powerStaked, pendingRaw] =
           await stakingRead.getUserStake(account);
 
         document.getElementById('staked-info').textContent =
-          `Staked NFTs: ${nftCount} | Power: ${powerStaked}`;
+          `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
 
         document.getElementById('pending-rewards').textContent =
           `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
