@@ -102,7 +102,7 @@
       border-radius: 8px; font-weight: 500;
       cursor: pointer;
       transition: background var(--transition), color var(--transition);
-      margin: 0 auto; /* center buttons */
+      margin: 0 auto;
     }
     button:hover { background: var(--neon-dim); color: #fff; }
     .form-group {
@@ -194,7 +194,6 @@
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
-      // full ABI including isApprovedForAll & setApprovalForAll, tokenPower, feeForPower, mint, balanceOf, tokenOfOwnerByIndex
       {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},
       {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},
       {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},
@@ -371,23 +370,31 @@
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
-      const staked = await stakingRead.stakedTokensOf(account);
-      staked.forEach(id => {
-        const o = document.createElement('option');
-        o.value = id.toString();
-        o.textContent = `#${id}`;
-        sel.append(o);
-      });
+      try {
+        const staked = await stakingRead.stakedTokensOf(account);
+        staked.forEach(id => {
+          const o = document.createElement('option');
+          o.value = id.toString();
+          o.textContent = `#${id}`;
+          sel.append(o);
+        });
+      } catch (e) {
+        console.error('populateStaked failed', e);
+      }
     }
 
     async function updateStats() {
-      const arr = await stakingRead.stakedTokensOf(account);
-      const pow = await stakingRead.totalPowerStaked(account);
-      const rew = await stakingRead.pendingRewards(account);
-      document.getElementById('staked-info').textContent =
-        `Staked NFTs: ${arr.length} | Power: ${pow}`;
-      document.getElementById('pending-rewards').textContent =
-        `Rewards: ${ethers.utils.formatUnits(rew,18)} S`;
+      try {
+        const arr = await stakingRead.stakedTokensOf(account);
+        const pow = await stakingRead.totalPowerStaked(account);
+        const rew = await stakingRead.pendingRewards(account);
+        document.getElementById('staked-info').textContent =
+          `Staked NFTs: ${arr.length} | Power: ${pow}`;
+        document.getElementById('pending-rewards').textContent =
+          `Rewards: ${ethers.utils.formatUnits(rew,18)} S`;
+      } catch (e) {
+        console.error('updateStats failed', e);
+      }
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
