@@ -12,8 +12,7 @@
     "/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>InFlow</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-        rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
       --neon: #00ffe1;
@@ -189,8 +188,8 @@
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
-    const STAKING_ADDRESS   = '0x997094ae83Ff75c594F315e39a15E4278d0B55Fe';
+    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
@@ -210,7 +209,7 @@
       "function stakedTokensOf(address) view returns (uint256[])",
       "function pendingRewards(address) view returns (uint256)",
       "function totalPowerStaked(address) view returns (uint256)",
-      "function getUserStake(address) view returns (uint256 nftCount, uint256 powerStaked, uint256 pending)"
+      "function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])"
     ];
 
     let provider, signer, account;
@@ -372,15 +371,19 @@
       }
     }
 
+    // UPDATED: now fetch tokenIds & powers from getUserStake
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
+
       try {
-        const staked = await stakingRead.stakedTokensOf(account);
-        staked.forEach(id => {
+        const [, , , tokenIds, powers] = 
+          await stakingRead.getUserStake(account);
+
+        tokenIds.forEach((id, i) => {
           const o = document.createElement('option');
           o.value = id.toString();
-          o.textContent = `#${id}`;
+          o.textContent = `#${id} (Power: ${powers[i]})`;
           sel.append(o);
         });
       } catch (e) {
@@ -390,7 +393,7 @@
 
     async function updateStats() {
       try {
-        const [nftCount, powerStaked, pendingRaw] =
+        const [nftCount, powerStaked, pendingRaw, tokenIds, powers] =
           await stakingRead.getUserStake(account);
 
         document.getElementById('staked-info').textContent =
@@ -398,6 +401,11 @@
 
         document.getElementById('pending-rewards').textContent =
           `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
+
+        console.log("Detailed position:", tokenIds.map((id, i) => ({
+          tokenId: id.toString(),
+          power:   powers[i]
+        })));
       } catch (e) {
         console.error('updateStats failed', e);
       }
