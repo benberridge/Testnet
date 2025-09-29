@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+      script-src 'self' https://cdn.jsdelivr.net https://jspm.dev 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
@@ -184,19 +184,20 @@
   <div class="socials">
     <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"></a>
     <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"></a>
-    <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
+    <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"/></a>
   </div>
 
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+    // Wagmi imports via JSPM CDN
     import {
       createClient,
       configureChains,
       watchAccount,
       watchNetwork
-    } from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/esm/index.js';
-    import { publicProvider } from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/esm/providers/public.js';
-    import { InjectedConnector } from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/esm/connectors/injected.js';
+    } from 'https://jspm.dev/@wagmi/core';
+    import { publicProvider } from 'https://jspm.dev/@wagmi/core/providers/public';
+    import { InjectedConnector } from 'https://jspm.dev/@wagmi/core/connectors/injected';
 
     // Sonic Testnet config
     const sonicTestnet = {
@@ -232,6 +233,7 @@
       "function isApprovedForAll(address owner, address operator) view returns (bool)",
       "function setApprovalForAll(address operator, bool approved)"
     ];
+
     const STAKING_ABI = [
       "function stake(uint256[])",
       "function unstake(uint256[])",
@@ -245,9 +247,11 @@
     let providerEthers, signer, account;
     let nftContract, stakingContract, stakingRead;
 
+    // Disable action buttons until connected
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
+    // Connect wallet handler
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
@@ -258,6 +262,7 @@
       }
     };
 
+    // Update on account change
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
@@ -266,6 +271,8 @@
         disconnect();
       }
     });
+
+    // Enforce correct network
     watchNetwork(({ chain }) => {
       if (chain?.id !== REQUIRED_CHAIN_ID) {
         document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
