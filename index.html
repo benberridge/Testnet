@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' https://cdn.jsdelivr.net https://cdn.skypack.dev 'unsafe-inline';
+      script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
@@ -194,9 +194,9 @@
       configureChains,
       watchAccount,
       watchNetwork
-    } from 'https://cdn.skypack.dev/@wagmi/core';
-    import { publicProvider } from 'https://cdn.skypack.dev/@wagmi/core/providers/public';
-    import { InjectedConnector } from 'https://cdn.skypack.dev/@wagmi/core/connectors/injected';
+    } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/index.esm.js';
+    import { publicProvider } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/providers/public/index.esm.js';
+    import { InjectedConnector } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/connectors/injected/index.esm.js';
 
     // Sonic Testnet config
     const sonicTestnet = {
@@ -232,6 +232,7 @@
       "function isApprovedForAll(address owner, address operator) view returns (bool)",
       "function setApprovalForAll(address operator, bool approved)"
     ];
+
     const STAKING_ABI = [
       "function stake(uint256[])",
       "function unstake(uint256[])",
@@ -254,9 +255,7 @@
       try {
         const data = await client.connect({ connector: injectedConnector });
         console.log('✅ Wagmi.connect:', data);
-      } catch (err) {
-        console.error('❌ Wagmi.connect failed:', err);
-      }
+      } catch (err) { console.error('❌ Wagmi.connect failed:', err); }
     };
 
     watchAccount(({ address, isConnected }) => {
@@ -318,9 +317,7 @@
           await populateOwned();
           await populateStaked();
           await updateStats();
-        } catch (e) {
-          document.getElementById('status').textContent = e.message;
-        }
+        } catch (e) { document.getElementById('status').textContent = e.message; }
       };
 
       document.getElementById('stake-button').onclick = async () => {
@@ -337,7 +334,6 @@
             const txA = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
             await txA.wait();
           }
-
           document.getElementById('stake-status').textContent = 'Staking…';
           const tx = await stakingContract.stake(ids);
           await tx.wait();
