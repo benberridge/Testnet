@@ -4,13 +4,13 @@
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' https://cdn.jsdelivr.net https://esm.sh 'unsafe-inline';
+      script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https://*.ardrive.net;
     "/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>InFlow</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
@@ -29,7 +29,7 @@
     body {
       background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
       color: var(--text-light);
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Roboto',sans-serif;
       padding: var(--gap);
       line-height: 1.4;
     }
@@ -52,13 +52,10 @@
       transition: background var(--transition),color var(--transition);
       z-index: 10;
     }
-    #wallet-button:hover {
-      background: var(--neon-dim);
-      color: #fff;
-    }
+    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
     .lower-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+      grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
       gap: var(--gap);
     }
     .box {
@@ -67,8 +64,7 @@
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: var(--radius);
       padding: var(--gap);
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       transition: transform var(--transition),box-shadow var(--transition);
     }
     .box:hover {
@@ -76,22 +72,17 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
     h1 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--neon);
-      text-align: center;
+      font-size: 1.8rem; font-weight: 700;
+      color: var(--neon); text-align: center;
       margin-bottom: 1rem;
       text-shadow: 0 0 4px var(--neon);
     }
     label {
-      font-weight: 500;
-      margin-bottom: .5rem;
+      font-weight: 500; margin-bottom: .5rem;
       color: var(--text-light);
     }
     select,input {
-      width: 100%;
-      padding: .6rem;
-      margin-bottom: 1rem;
+      width: 100%; padding: .6rem; margin-bottom: 1rem;
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 8px;
       background: rgba(255,255,255,0.03);
@@ -99,36 +90,25 @@
       font-size: 1rem;
       transition: border var(--transition);
     }
-    select:focus,input:focus {
-      outline: none;
-      border-color: var(--neon);
-    }
+    select:focus,input:focus { outline: none; border-color: var(--neon); }
     button {
-      padding: .75rem;
-      border: 2px solid var(--neon);
-      background: transparent;
-      color: var(--neon);
-      border-radius: 8px;
-      font-weight: 500;
+      padding: .75rem; border: 2px solid var(--neon);
+      background: transparent; color: var(--neon);
+      border-radius: 8px; font-weight: 500;
       cursor: pointer;
       transition: background var(--transition),color var(--transition);
       margin: 0 auto;
     }
-    button:hover {
-      background: var(--neon-dim);
-      color: #fff;
-    }
-    .info {
-      text-align: center;
-      margin: .75rem 0;
-      font-size: .95rem;
-    }
+    button:hover { background: var(--neon-dim); color: #fff; }
+    .info { text-align: center; margin: .75rem 0; font-size: .95rem; }
   </style>
 </head>
 <body>
   <div class="brand">InFlow</div>
   <button id="wallet-button">Connect Wallet</button>
+
   <div class="lower-section">
+    <!-- Mint Box -->
     <div class="box">
       <h1>Mint NFT</h1>
       <label for="power-select">Select Power & Price</label>
@@ -148,16 +128,16 @@
       <div id="status" class="info">Disconnected</div>
     </div>
 
+    <!-- Stake Box -->
     <div class="box">
       <h1>Stake & Unstake</h1>
+
       <label for="stake-select">Your NFTs (Power)</label>
       <select id="stake-select" multiple size="5"></select>
-      
       <button id="stake-button">Stake Selected</button>
 
       <label for="unstake-select">Staked NFTs</label>
       <select id="unstake-select" multiple size="5"></select>
-      
       <button id="unstake-button">Unstake Selected</button>
 
       <div id="staked-info" class="info">Staked NFTs: 0 | Power: 0</div>
@@ -166,6 +146,7 @@
       <div id="stake-status" class="info"></div>
     </div>
 
+    <!-- Coming Soon -->
     <div class="box">
       <h1>Coming Soon</h1>
       <p class="info">Redeem utilities launching shortly!</p>
@@ -173,24 +154,23 @@
   </div>
 
   <script type="module">
-    // ethers.js from jsDelivr
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // Wagmi Core v2.21.2 bundled ESM from esm.sh
+    // 1) Wagmi Core ESM
     import {
       createClient,
       configureChains,
       watchAccount,
       watchNetwork
-    } from 'https://esm.sh/@wagmi/core@2.21.2?bundle';
+    } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/index.module.js';
 
+    // 2) Provider & Connector
     import { publicProvider }
-      from 'https://esm.sh/@wagmi/core@2.21.2/providers/public?bundle';
-
+      from 'https://unpkg.com/@wagmi/core@2.21.2/dist/providers/public/index.module.js';
     import { InjectedConnector }
-      from 'https://esm.sh/@wagmi/core@2.21.2/connectors/injected?bundle';
+      from 'https://unpkg.com/@wagmi/core@2.21.2/dist/connectors/injected/index.module.js';
 
-    // Sonic Testnet chain config
+    // Sonic Testnet config
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -211,9 +191,8 @@
       provider
     });
 
-    // Contract addresses & ABIs
-    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
-    const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
+    const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
@@ -236,16 +215,14 @@
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
-    // disable until wallet connects
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
-    // Connect wallet button
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
-        const data = await client.connect({ connector: injectedConnector });
-        console.log('✅ Wagmi.connect result:', data);
+        const result = await client.connect({ connector: injectedConnector });
+        console.log('✅ Wagmi.connect:', result);
       } catch (err) {
         console.error('❌ Wagmi.connect error:', err);
       }
@@ -256,7 +233,7 @@
         account = address;
         initializeEthers();
       } else {
-        disconnect();
+        teardown();
       }
     });
 
@@ -286,7 +263,7 @@
       await refreshAll();
     }
 
-    function disconnect() {
+    function teardown() {
       signer = account = nftContract = stakingContract = stakingRead = null;
       document.getElementById('wallet-button').textContent = 'Connect Wallet';
       document.getElementById('status').textContent = 'Disconnected';
