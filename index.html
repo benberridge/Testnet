@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' https://cdn.jsdelivr.net https://esm.sh 'unsafe-inline';
+      script-src
+        'self'
+        https://cdn.jsdelivr.net
+        https://unpkg.com
+        'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data:;
-    "/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    " />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InFlow</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-    rel="stylesheet"/>
+    rel="stylesheet" />
   <style>
     :root {
       --neon: #00ffe1;
@@ -25,82 +29,88 @@
       --gap: 1.5rem;
       --transition: 0.3s ease;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0 }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
+      background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
       color: var(--text-light);
-      font-family: 'Roboto',sans-serif;
+      font-family: 'Roboto', sans-serif;
       padding: var(--gap);
-      line-height:1.4;
+      line-height: 1.4;
     }
     .brand {
-      text-align:center;
-      font-size:2.5rem;
-      font-weight:700;
-      color:var(--neon);
-      text-shadow:0 0 8px var(--neon),0 0 16px var(--neon);
-      margin-bottom:var(--gap);
-      letter-spacing:2px;
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--neon);
+      text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon);
+      margin-bottom: var(--gap);
+      letter-spacing: 2px;
     }
     #wallet-button {
-      position:fixed; top:var(--gap); right:var(--gap);
-      padding:.6rem 1.2rem;
-      border:2px solid var(--neon);
-      background:transparent; color:var(--neon);
-      border-radius:var(--radius);
-      font-weight:500; cursor:pointer;
-      transition:background var(--transition),color var(--transition);
-      z-index:10;
+      position: fixed; top: var(--gap); right: var(--gap);
+      padding: .6rem 1.2rem;
+      border: 2px solid var(--neon);
+      background: transparent; color: var(--neon);
+      border-radius: var(--radius);
+      font-weight: 500; cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      z-index: 10;
     }
-    #wallet-button:hover { background:var(--neon-dim); color:#fff }
+    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
     .lower-section {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-      gap:var(--gap);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--gap);
     }
     .box {
-      background:var(--card-bg);
-      backdrop-filter:blur(12px);
-      border:1px solid rgba(255,255,255,0.1);
-      border-radius:var(--radius);
-      padding:var(--gap);
-      display:flex; flex-direction:column;
-      transition:transform var(--transition),box-shadow var(--transition);
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: var(--gap);
+      display: flex; flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition);
     }
     .box:hover {
-      transform:translateY(-6px);
-      box-shadow:0 8px 32px rgba(0,0,0,0.6);
+      transform: translateY(-6px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
     h1 {
-      font-size:1.8rem; font-weight:700;
-      color:var(--neon); text-align:center;
-      margin-bottom:1rem;
-      text-shadow:0 0 4px var(--neon);
+      font-size: 1.8rem; font-weight: 700;
+      color: var(--neon); text-align: center;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 4px var(--neon);
     }
     label {
-      font-weight:500; margin-bottom:.5rem;
-      color:var(--text-light);
+      font-weight: 500; margin-bottom: .5rem;
+      color: var(--text-light);
     }
-    select,input {
-      width:100%; padding:.6rem; margin-bottom:1rem;
-      border:1px solid rgba(255,255,255,0.2);
-      border-radius:8px;
-      background:rgba(255,255,255,0.03);
-      color:var(--text-light);
-      font-size:1rem;
-      transition:border var(--transition);
+    select, input {
+      width: 100%; padding: .6rem; margin-bottom: 1rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: border var(--transition);
     }
-    select:focus,input:focus { outline:none; border-color:var(--neon) }
+    select:focus, input:focus {
+      outline: none; border-color: var(--neon);
+    }
     button {
-      padding:.75rem; border:2px solid var(--neon);
-      background:transparent; color:var(--neon);
-      border-radius:8px; font-weight:500;
-      cursor:pointer;
-      transition:background var(--transition),color var(--transition);
-      margin:0 auto;
+      padding: .75rem; border: 2px solid var(--neon);
+      background: transparent; color: var(--neon);
+      border-radius: 8px; font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      margin: 0 auto;
     }
-    button:hover { background:var(--neon-dim); color:#fff }
-    .info { text-align:center; margin:.75rem 0; font-size:.95rem }
+    button:hover {
+      background: var(--neon-dim); color: #fff;
+    }
+    .info {
+      text-align: center; margin: .75rem 0; font-size: .95rem;
+    }
   </style>
 </head>
 <body>
@@ -153,24 +163,27 @@
   </div>
 
   <script type="module">
-    // 1) ethers.js
+    // ethers.js from jsDelivr
     import { ethers }
       from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // 2) wagmi/core bundle (createClient, configureChains, watchAccount, watchNetwork, publicProvider)
+    // Wagmi Core v2.21.2 via Unpkg
     import {
       createClient,
       configureChains,
       watchAccount,
-      watchNetwork,
-      publicProvider
-    } from 'https://esm.sh/@wagmi/core@2.21.2?bundle';
+      watchNetwork
+    } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/index.module.js';
 
-    // 3) injected connector factory from esm.sh
-    import { injected }
-      from 'https://esm.sh/@wagmi/connectors?bundle';
+    // publicProvider from Core’s providers
+    import { publicProvider }
+      from 'https://unpkg.com/@wagmi/core@2.21.2/dist/providers/public/index.module.js';
 
-    // Sonic Testnet settings
+    // InjectedConnector from Standalone Connectors
+    import { InjectedConnector }
+      from 'https://unpkg.com/@wagmi/connectors@0.4.14/dist/injected/index.module.js';
+
+    // Sonic Testnet chain config
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -179,13 +192,13 @@
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
-    // Build client
+    // Build Wagmi client
     const { chains, provider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
     );
-    const connector = injected({ chains });
-    const client    = createClient({
+    const connector = new InjectedConnector({ chains });
+    const client = createClient({
       autoConnect: true,
       connectors: [connector],
       provider
@@ -197,38 +210,38 @@
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
-      'function balanceOf(address) view returns (uint256)',
-      'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
-      'function tokenPower(uint256) view returns (uint8)',
-      'function feeForPower(uint8) view returns (uint256)',
-      'function mint(uint8) payable',
-      'function isApprovedForAll(address,address) view returns (bool)',
-      'function setApprovalForAll(address,bool)'
+      "function balanceOf(address) view returns (uint256)",
+      "function tokenOfOwnerByIndex(address,uint256) view returns (uint256)",
+      "function tokenPower(uint256) view returns (uint8)",
+      "function feeForPower(uint8) view returns (uint256)",
+      "function mint(uint8) payable",
+      "function isApprovedForAll(address,address) view returns (bool)",
+      "function setApprovalForAll(address,bool)"
     ];
     const STAKING_ABI = [
-      'function stake(uint256[])',
-      'function unstake(uint256[])',
-      'function claimRewards()',
-      'function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])'
+      "function stake(uint256[])",
+      "function unstake(uint256[])",
+      "function claimRewards()",
+      "function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])"
     ];
 
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
-    // disable UI until wallet-connected
-    document.getElementById('mint-button').disabled  = true;
+    // Disable UI until connected
+    document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
-    // Connect button
+    // Connect Wallet
     document.getElementById('wallet-button').onclick = async () => {
       try {
         await client.connect({ connector });
       } catch (err) {
-        console.error('Connection failed:', err);
+        console.error('❌ Connection failed:', err);
       }
     };
 
-    // React to account & network
+    // React to account & network changes
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
@@ -252,7 +265,7 @@
       document.getElementById('wallet-button').textContent =
         '…' + account.slice(-4);
       document.getElementById('status').textContent = 'Connected';
-      document.getElementById('mint-button').disabled  = false;
+      document.getElementById('mint-button').disabled = false;
       document.getElementById('claim-button').disabled = false;
 
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
@@ -265,15 +278,15 @@
 
     function teardown() {
       signer = account = nftContract = stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
-      document.getElementById('status').textContent           = 'Disconnected';
-      document.getElementById('mint-button').disabled         = true;
-      document.getElementById('stake-select').innerHTML       = '';
-      document.getElementById('unstake-select').innerHTML     = '';
-      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
-      document.getElementById('stake-status').textContent     = '';
-      document.getElementById('claim-button').disabled        = true;
+      document.getElementById('wallet-button').textContent = 'Connect Wallet';
+      document.getElementById('status').textContent        = 'Disconnected';
+      document.getElementById('mint-button').disabled      = true;
+      document.getElementById('stake-select').innerHTML    = '';
+      document.getElementById('unstake-select').innerHTML  = '';
+      document.getElementById('staked-info').textContent   = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent  = '';
+      document.getElementById('claim-button').disabled     = true;
     }
 
     function attachHandlers() {
@@ -282,7 +295,7 @@
         try {
           document.getElementById('status').textContent = 'Minting…';
           const cost = await nftContract.feeForPower(p);
-          const tx   = await nftContract.mint(p, { value: cost });
+          const tx = await nftContract.mint(p, { value: cost });
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
           await refreshAll();
@@ -350,11 +363,11 @@
       const bal = await nftContract.balanceOf(account);
       for (let i = 0; i < bal; i++) {
         const id = await nftContract.tokenOfOwnerByIndex(account, i);
-        const p  = await nftContract.tokenPower(id);
-        const o  = document.createElement('option');
-        o.value      = id.toString();
-        o.textContent = `#${id} (Power: ${p})`;
-        sel.append(o);
+        const p = await nftContract.tokenPower(id);
+        const opt = document.createElement('option');
+        opt.value = id.toString();
+        opt.textContent = `#${id} (Power: ${p})`;
+        sel.append(opt);
       }
     }
 
@@ -364,10 +377,10 @@
       try {
         const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
         tokenIds.forEach((id, i) => {
-          const o = document.createElement('option');
-          o.value      = id.toString();
-          o.textContent = `#${id} (Power: ${powers[i]})`;
-          sel.append(o);
+          const opt = document.createElement('option');
+          opt.value = id.toString();
+          opt.textContent = `#${id} (Power: ${powers[i]})`;
+          sel.append(opt);
         });
       } catch (e) {
         console.error('populateStaked failed', e);
