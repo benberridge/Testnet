@@ -27,80 +27,80 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0 }
     body {
-      background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
+      background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
       color: var(--text-light);
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Roboto',sans-serif;
       padding: var(--gap);
-      line-height: 1.4;
+      line-height:1.4;
     }
     .brand {
-      text-align: center;
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--neon);
-      text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon);
-      margin-bottom: var(--gap);
-      letter-spacing: 2px;
+      text-align:center;
+      font-size:2.5rem;
+      font-weight:700;
+      color:var(--neon);
+      text-shadow:0 0 8px var(--neon),0 0 16px var(--neon);
+      margin-bottom:var(--gap);
+      letter-spacing:2px;
     }
     #wallet-button {
-      position: fixed; top: var(--gap); right: var(--gap);
-      padding: .6rem 1.2rem;
-      border: 2px solid var(--neon);
-      background: transparent; color: var(--neon);
-      border-radius: var(--radius);
-      font-weight: 500; cursor: pointer;
-      transition: background var(--transition), color var(--transition);
-      z-index: 10;
+      position:fixed; top:var(--gap); right:var(--gap);
+      padding:.6rem 1.2rem;
+      border:2px solid var(--neon);
+      background:transparent; color:var(--neon);
+      border-radius:var(--radius);
+      font-weight:500; cursor:pointer;
+      transition:background var(--transition),color var(--transition);
+      z-index:10;
     }
-    #wallet-button:hover { background: var(--neon-dim); color: #fff }
+    #wallet-button:hover { background:var(--neon-dim); color:#fff }
     .lower-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
-      gap: var(--gap);
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+      gap:var(--gap);
     }
     .box {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--radius);
-      padding: var(--gap);
-      display: flex; flex-direction: column;
-      transition: transform var(--transition), box-shadow var(--transition);
+      background:var(--card-bg);
+      backdrop-filter:blur(12px);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:var(--radius);
+      padding:var(--gap);
+      display:flex; flex-direction:column;
+      transition:transform var(--transition),box-shadow var(--transition);
     }
     .box:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      transform:translateY(-6px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.6);
     }
     h1 {
-      font-size: 1.8rem; font-weight: 700;
-      color: var(--neon); text-align: center;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 4px var(--neon);
+      font-size:1.8rem; font-weight:700;
+      color:var(--neon); text-align:center;
+      margin-bottom:1rem;
+      text-shadow:0 0 4px var(--neon);
     }
     label {
-      font-weight: 500; margin-bottom: .5rem;
-      color: var(--text-light);
+      font-weight:500; margin-bottom:.5rem;
+      color:var(--text-light);
     }
-    select, input {
-      width: 100%; padding: .6rem; margin-bottom: 1rem;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.03);
-      color: var(--text-light);
-      font-size: 1rem;
-      transition: border var(--transition);
+    select,input {
+      width:100%; padding:.6rem; margin-bottom:1rem;
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:8px;
+      background:rgba(255,255,255,0.03);
+      color:var(--text-light);
+      font-size:1rem;
+      transition:border var(--transition);
     }
-    select:focus, input:focus { outline: none; border-color: var(--neon); }
+    select:focus,input:focus { outline:none; border-color:var(--neon) }
     button {
-      padding: .75rem; border: 2px solid var(--neon);
-      background: transparent; color: var(--neon);
-      border-radius: 8px; font-weight: 500;
-      cursor: pointer;
-      transition: background var(--transition), color var(--transition);
-      margin: 0 auto;
+      padding:.75rem; border:2px solid var(--neon);
+      background:transparent; color:var(--neon);
+      border-radius:8px; font-weight:500;
+      cursor:pointer;
+      transition:background var(--transition),color var(--transition);
+      margin:0 auto;
     }
-    button:hover { background: var(--neon-dim); color: #fff }
-    .info { text-align: center; margin: .75rem 0; font-size: .95rem }
+    button:hover { background:var(--neon-dim); color:#fff }
+    .info { text-align:center; margin:.75rem 0; font-size:.95rem }
   </style>
 </head>
 <body>
@@ -108,6 +108,7 @@
   <button id="wallet-button">Connect Wallet</button>
 
   <div class="lower-section">
+    <!-- Mint -->
     <div class="box">
       <h1>Mint NFT</h1>
       <label for="power-select">Select Power & Price</label>
@@ -127,6 +128,7 @@
       <div id="status" class="info">Disconnected</div>
     </div>
 
+    <!-- Stake / Unstake -->
     <div class="box">
       <h1>Stake & Unstake</h1>
       <label for="stake-select">Your NFTs (Power)</label>
@@ -143,6 +145,7 @@
       <div id="stake-status" class="info"></div>
     </div>
 
+    <!-- Coming Soon -->
     <div class="box">
       <h1>Coming Soon</h1>
       <p class="info">Redeem utilities launching shortly!</p>
@@ -154,7 +157,7 @@
     import { ethers }
       from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // 2) Wagmi Core bundle (createClient, configureChains, watchAccount, watchNetwork, publicProvider)
+    // 2) wagmi/core bundle (createClient, configureChains, watchAccount, watchNetwork, publicProvider)
     import {
       createClient,
       configureChains,
@@ -163,11 +166,11 @@
       publicProvider
     } from 'https://esm.sh/@wagmi/core@2.21.2?bundle';
 
-    // 3) Injected connector factory from jsDelivr (correct ESM path)
+    // 3) injected connector factory from esm.sh
     import { injected }
-      from 'https://cdn.jsdelivr.net/npm/@wagmi/connectors@0.4.14/dist/esm/injected/index.js';
+      from 'https://esm.sh/@wagmi/connectors?bundle';
 
-    // Sonic Testnet configuration
+    // Sonic Testnet settings
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -176,22 +179,19 @@
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
-    // Build Wagmi client
+    // Build client
     const { chains, provider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
     );
-
-    // Call the connector factory with your chains
     const connector = injected({ chains });
-
-    const client = createClient({
+    const client    = createClient({
       autoConnect: true,
       connectors: [connector],
       provider
     });
 
-    // Contract addresses & ABIs
+    // Addresses & ABIs
     const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
@@ -205,7 +205,6 @@
       'function isApprovedForAll(address,address) view returns (bool)',
       'function setApprovalForAll(address,bool)'
     ];
-
     const STAKING_ABI = [
       'function stake(uint256[])',
       'function unstake(uint256[])',
@@ -216,11 +215,11 @@
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
-    // Disable until wallet connects
+    // disable UI until wallet-connected
     document.getElementById('mint-button').disabled  = true;
     document.getElementById('claim-button').disabled = true;
 
-    // Connect Wallet button
+    // Connect button
     document.getElementById('wallet-button').onclick = async () => {
       try {
         await client.connect({ connector });
@@ -229,16 +228,15 @@
       }
     };
 
-    // React to account/network changes
+    // React to account & network
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
-        initializeEthers();
+        initEthers();
       } else {
         teardown();
       }
     });
-
     watchNetwork(({ chain }) => {
       if (chain?.id !== REQUIRED_CHAIN_ID) {
         document.getElementById('status').textContent =
@@ -246,7 +244,7 @@
       }
     });
 
-    async function initializeEthers() {
+    async function initEthers() {
       const wagmiProv = provider();
       const web3p     = new ethers.providers.Web3Provider(wagmiProv, 'any');
       signer          = web3p.getSigner();
@@ -298,7 +296,6 @@
           document.getElementById('stake-select').selectedOptions
         ).map(o => +o.value);
         if (!ids.length) return;
-
         try {
           document.getElementById('stake-status').textContent = 'Checking approval…';
           if (!(await nftContract.isApprovedForAll(account, STAKING_ADDRESS))) {
@@ -319,7 +316,6 @@
           document.getElementById('unstake-select').selectedOptions
         ).map(o => +o.value);
         if (!ids.length) return;
-
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
           await (await stakingContract.unstake(ids)).wait();
