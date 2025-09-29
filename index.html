@@ -29,7 +29,7 @@
     body {
       background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
       color: var(--text-light);
-      font-family: 'Roboto',sans-serif;
+      font-family: 'Roboto', sans-serif;
       padding: var(--gap);
       line-height: 1.4;
     }
@@ -55,7 +55,7 @@
     #wallet-button:hover { background: var(--neon-dim); color: #fff; }
     .lower-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+      grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
       gap: var(--gap);
     }
     .box {
@@ -108,7 +108,6 @@
   <button id="wallet-button">Connect Wallet</button>
 
   <div class="lower-section">
-    <!-- Mint Box -->
     <div class="box">
       <h1>Mint NFT</h1>
       <label for="power-select">Select Power & Price</label>
@@ -128,7 +127,6 @@
       <div id="status" class="info">Disconnected</div>
     </div>
 
-    <!-- Stake Box -->
     <div class="box">
       <h1>Stake & Unstake</h1>
 
@@ -146,7 +144,6 @@
       <div id="stake-status" class="info"></div>
     </div>
 
-    <!-- Coming Soon -->
     <div class="box">
       <h1>Coming Soon</h1>
       <p class="info">Redeem utilities launching shortly!</p>
@@ -154,21 +151,24 @@
   </div>
 
   <script type="module">
-    import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+    // 1) ethers.js
+    import { ethers } from 
+      'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // 1) Wagmi Core ESM
+    // 2) Wagmi core via unpkg ?module
     import {
       createClient,
       configureChains,
       watchAccount,
       watchNetwork
-    } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/index.module.js';
+    } from 
+      'https://unpkg.com/@wagmi/core@2.21.2/dist/index.module.js?module';
 
-    // 2) Provider & Connector
-    import { publicProvider }
-      from 'https://unpkg.com/@wagmi/core@2.21.2/dist/providers/public/index.module.js';
-    import { InjectedConnector }
-      from 'https://unpkg.com/@wagmi/core@2.21.2/dist/connectors/injected/index.module.js';
+    import { publicProvider } from 
+      'https://unpkg.com/@wagmi/core@2.21.2/dist/providers/public/index.module.js?module';
+
+    import { InjectedConnector } from 
+      'https://unpkg.com/@wagmi/core@2.21.2/dist/connectors/injected/index.module.js?module';
 
     // Sonic Testnet config
     const sonicTestnet = {
@@ -191,6 +191,7 @@
       provider
     });
 
+    // Addresses & ABIs
     const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
@@ -215,25 +216,27 @@
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
+    // disable UI until ready
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
+    // Connect Wallet
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
-        const result = await client.connect({ connector: injectedConnector });
-        console.log('✅ Wagmi.connect:', result);
+        const data = await client.connect({ connector: injectedConnector });
+        console.log('✅ Wagmi.connect:', data);
       } catch (err) {
-        console.error('❌ Wagmi.connect error:', err);
+        console.error('❌ Wagmi.connect failed:', err);
       }
     };
 
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
-        initializeEthers();
+        initEthers();
       } else {
-        teardown();
+        tearDown();
       }
     });
 
@@ -244,10 +247,10 @@
       }
     });
 
-    async function initializeEthers() {
-      const wagmiProvider = provider();
-      const web3P = new ethers.providers.Web3Provider(wagmiProvider, 'any');
-      signer = web3P.getSigner();
+    async function initEthers() {
+      const wagmiProv = provider();
+      const web3p = new ethers.providers.Web3Provider(wagmiProv, 'any');
+      signer = web3p.getSigner();
 
       document.getElementById('wallet-button').textContent =
         '…' + account.slice(-4);
@@ -255,15 +258,15 @@
       document.getElementById('mint-button').disabled = false;
       document.getElementById('claim-button').disabled = false;
 
-      nftContract = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
+      nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
-      stakingRead = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, web3P);
+      stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, web3p);
 
       attachHandlers();
       await refreshAll();
     }
 
-    function teardown() {
+    function tearDown() {
       signer = account = nftContract = stakingContract = stakingRead = null;
       document.getElementById('wallet-button').textContent = 'Connect Wallet';
       document.getElementById('status').textContent = 'Disconnected';
@@ -282,7 +285,7 @@
         try {
           document.getElementById('status').textContent = 'Minting…';
           const cost = await nftContract.feeForPower(p);
-          const tx = await nftContract.mint(p, { value: cost });
+          const tx   = await nftContract.mint(p, { value: cost });
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
           await refreshAll();
@@ -350,9 +353,9 @@
       const bal = await nftContract.balanceOf(account);
       for (let i = 0; i < bal; i++) {
         const id = await nftContract.tokenOfOwnerByIndex(account, i);
-        const p = await nftContract.tokenPower(id);
-        const o = document.createElement('option');
-        o.value = id.toString();
+        const p  = await nftContract.tokenPower(id);
+        const o  = document.createElement('option');
+        o.value      = id.toString();
         o.textContent = `#${id} (Power: ${p})`;
         sel.append(o);
       }
@@ -365,7 +368,7 @@
         const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
         tokenIds.forEach((id, i) => {
           const o = document.createElement('option');
-          o.value = id.toString();
+          o.value      = id.toString();
           o.textContent = `#${id} (Power: ${powers[i]})`;
           sel.append(o);
         });
