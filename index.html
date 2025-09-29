@@ -247,7 +247,17 @@
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
-    // Wagmi event listeners
+    // Log clicks to debug
+    document.getElementById('wallet-button').onclick = async () => {
+      console.log('🔹 Connect clicked');
+      try {
+        const data = await client.connect({ connector: injectedConnector });
+        console.log('✅ Wagmi.connect:', data);
+      } catch (err) {
+        console.error('❌ Wagmi.connect failed:', err);
+      }
+    };
+
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
@@ -266,6 +276,7 @@
       const wagmiProvider = provider();
       providerEthers = new ethers.providers.Web3Provider(wagmiProvider, 'any');
       signer = providerEthers.getSigner();
+
       document.getElementById('wallet-button').textContent = '…' + account.slice(-4);
       document.getElementById('status').textContent        = 'Connected';
       document.getElementById('mint-button').disabled      = false;
@@ -281,10 +292,6 @@
       await updateStats();
     }
 
-    document.getElementById('wallet-button').onclick = () => {
-      client.connect({ connector: injectedConnector });
-    };
-
     function disconnect() {
       account = signer = nftContract = stakingContract = stakingRead = null;
       document.getElementById('wallet-button').textContent    = 'Connect Wallet';
@@ -299,10 +306,81 @@
     }
 
     function attachHandlers() {
-      // … existing mint/stake/unstake/claim code unchanged …
+      document.getElementById('mint-button').onclick = async () => {
+        const p = +document.getElementById('power-select').value;
+        try {
+          const cost = await nftContract.feeForPower(p);
+          const tx   = await nftContract.mint(p, { value: cost });
+          document.getElementById('status').textContent = 'Minting…';
+          await tx.wait();
+          document.getElementById('status').textContent = 'Mint successful!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('stake-button').onclick = async () => {
+        const ids = Array.from(
+          document.getElementById('stake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Checking approval…';
+          const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
+          if (!approved) {
+            document.getElementById('stake-status').textContent = 'Approving…';
+            const txA = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
+            await txA.wait();
+          }
+
+          document.getElementById('stake-status').textContent = 'Staking…';
+          const tx = await stakingContract.stake(ids);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Staked!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('unstake-button').onclick = async () => {
+        const ids = Array.from(
+          document.getElementById('unstake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Unstaking…';
+          const tx = await stakingContract.unstake(ids);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Unstaked!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('claim-button').onclick = async () => {
+        try {
+          document.getElementById('stake-status').textContent = 'Claiming…';
+          const tx = await stakingContract.claimRewards();
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
     }
 
-    // Populate the “Your NFTs (Power)” dropdown
     async function populateOwned() {
       const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
@@ -317,7 +395,6 @@
       }
     }
 
-    // Populate the “Staked NFTs” dropdown using tokenIds & powers
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
@@ -329,10 +406,11 @@
           o.textContent = `#${id} (Power: ${powers[i]})`;
           sel.append(o);
         });
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error('populateStaked failed', e);
+      }
     }
 
-    // Update the summary info at top of the staking card
     async function updateStats() {
       try {
         const [nftCount, powerStaked, pendingRaw] =
@@ -341,7 +419,9 @@
           `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
         document.getElementById('pending-rewards').textContent =
           `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error('updateStats failed', e);
+      }
     }
   </script>
 </body>
