@@ -12,10 +12,11 @@
     "/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>InFlow</title>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" 
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
     rel="stylesheet"/>
   <style>
+    /* — your neon/glassmorphic CSS here — */
     :root {
       --neon: #00ffe1;
       --neon-dim: rgba(0,255,225,0.2);
@@ -53,12 +54,6 @@
       z-index: 10;
     }
     #wallet-button:hover { background: var(--neon-dim); color: #fff; }
-    .banner-wrapper {
-      max-width: 300px; margin: 0 auto calc(var(--gap)*1.5);
-      border-radius: var(--radius); overflow: hidden;
-      box-shadow: 0 0 20px rgba(0,0,0,0.7);
-    }
-    .banner-wrapper img { width: 100%; display: block; }
     .lower-section {
       display: grid;
       grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
@@ -106,102 +101,78 @@
       margin: 0 auto;
     }
     button:hover { background: var(--neon-dim); color: #fff; }
-    .form-group {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-    }
-    .info { text-align: center; margin: .75rem 0; font-size: .95rem; }
-    #status, #stake-status {
-      text-align: center; margin-top: .5rem;
-      min-height: 1.2em; font-size: .9rem; color: var(--neon);
-    }
-    .socials { text-align: center; margin-top: var(--gap); }
-    .socials a { margin: 0 .5rem; display: inline-block; }
-    .socials img {
-      width: 28px; height: 28px;
-      filter: drop-shadow(0 0 4px var(--neon));
-    }
+    .info { text-align: center; font-size: .95rem; margin: .75rem 0; }
   </style>
 </head>
 <body>
   <div class="brand">InFlow</div>
   <button id="wallet-button">Connect Wallet</button>
 
-  <div class="banner-wrapper">
-    <img
-      src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
-      alt="InFlow Banner"/>
-  </div>
-
   <div class="lower-section">
+    <!-- Mint Card -->
     <div class="box">
       <h1>Mint NFT</h1>
-      <div class="form-group">
-        <label for="power-select">Select Power & Price</label>
-        <select id="power-select">
-          <option value="1">1 — $S10</option>
-          <option value="2">2 — $S20</option>
-          <option value="3">3 — $S30</option>
-          <option value="4">4 — $S40</option>
-          <option value="5">5 — $S50</option>
-          <option value="6">6 — $S60</option>
-          <option value="7">7 — $S70</option>
-          <option value="8">8 — $S80</option>
-          <option value="9">9 — $S90</option>
-          <option value="10">10 — $S100</option>
-        </select>
-        <button id="mint-button">Mint Now</button>
-      </div>
-      <div id="status">Disconnected</div>
+      <label for="power-select">Select Power & Price</label>  
+      <select id="power-select">
+        <option value="1">1 — $S10</option>
+        <option value="2">2 — $S20</option>
+        <option value="3">3 — $S30</option>
+        <option value="4">4 — $S40</option>
+        <option value="5">5 — $S50</option>
+        <option value="6">6 — $S60</option>
+        <option value="7">7 — $S70</option>
+        <option value="8">8 — $S80</option>
+        <option value="9">9 — $S90</option>
+        <option value="10">10 — $S100</option>
+      </select>
+      <button id="mint-button">Mint Now</button>
+      <div id="status" class="info">Disconnected</div>
     </div>
 
+    <!-- Staking Card -->
     <div class="box">
       <h1>Stake & Unstake</h1>
-      <div class="form-group">
-        <label for="stake-select">Your NFTs (Power)</label>
-        <select id="stake-select" multiple size="5"></select>
-        <button id="stake-button">Stake Selected</button>
-      </div>
-      <div class="form-group">
-        <label for="unstake-select">Staked NFTs</label>
-        <select id="unstake-select" multiple size="5"></select>
-        <button id="unstake-button">Unstake Selected</button>
-      </div>
-      <div class="info" id="staked-info">Staked NFTs: 0 | Power: 0</div>
-      <div class="info" id="pending-rewards">Rewards: 0 S</div>
+      <label for="stake-select">Your NFTs (Power)</label>
+      <select id="stake-select" multiple size="5"></select>
+      <button id="stake-button">Stake Selected</button>
+
+      <label for="unstake-select">Staked NFTs</label>
+      <select id="unstake-select" multiple size="5"></select>
+      <button id="unstake-button">Unstake Selected</button>
+
+      <div id="staked-info" class="info">Staked NFTs: 0 | Power: 0</div>
+      <div id="pending-rewards" class="info">Rewards: 0 S</div>
       <button id="claim-button">Claim Rewards</button>
-      <div id="stake-status"></div>
+      <div id="stake-status" class="info"></div>
     </div>
 
+    <!-- Coming Soon -->
     <div class="box">
       <h1>Coming Soon</h1>
       <p class="info">Redeem utilities launching shortly!</p>
     </div>
   </div>
 
-  <div class="socials">
-    <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"/></a>
-    <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"/></a>
-    <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"/></a>
-  </div>
-
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // wagmi/core ESM builds from jsDelivr
+    // 1) Wagmi core ESM API
     import {
       createClient,
       configureChains,
       watchAccount,
       watchNetwork
-    } from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/index.esm.js';
+    } from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/esm/index.js';
 
-    import { publicProvider } from
-      'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/providers/public/index.esm.js';
+    // 2) Public provider
+    import { publicProvider }
+      from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/esm/providers/public.js';
 
-    import { InjectedConnector } from
-      'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/connectors/injected/index.esm.js';
+    // 3) InjectedConnector
+    import { InjectedConnector }
+      from 'https://cdn.jsdelivr.net/npm/@wagmi/core@2.21.2/dist/esm/connectors/injected.js';
 
-    // Sonic Testnet
+    // --- Configure Sonic Testnet ---
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -214,6 +185,7 @@
       [sonicTestnet],
       [publicProvider()]
     );
+
     const injectedConnector = new InjectedConnector({ chains });
     const client = createClient({
       autoConnect: true,
@@ -221,18 +193,19 @@
       provider
     });
 
+    // --- Contracts & ABIs ---
     const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
-      "function balanceOf(address owner) view returns (uint256)",
-      "function tokenOfOwnerByIndex(address owner,uint256 index) view returns (uint256)",
-      "function tokenPower(uint256 tokenId) view returns (uint8)",
-      "function feeForPower(uint8 power) view returns (uint256)",
-      "function mint(uint8 power) payable",
-      "function isApprovedForAll(address owner,address operator) view returns (bool)",
-      "function setApprovalForAll(address operator,bool approved)"
+      "function balanceOf(address) view returns (uint256)",
+      "function tokenOfOwnerByIndex(address,uint256) view returns (uint256)",
+      "function tokenPower(uint256) view returns (uint8)",
+      "function feeForPower(uint8) view returns (uint256)",
+      "function mint(uint8) payable",
+      "function isApprovedForAll(address,address) view returns (bool)",
+      "function setApprovalForAll(address,bool)"
     ];
 
     const STAKING_ABI = [
@@ -245,25 +218,28 @@
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
+    // disable until connected
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
+    // Connect wallet
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
-        const data = await client.connect({ connector: injectedConnector });
-        console.log('✅ Wagmi.connect:', data);
+        const result = await client.connect({ connector: injectedConnector });
+        console.log('✅ Connected', result);
       } catch (err) {
-        console.error('❌ Wagmi.connect failed:', err);
+        console.error('❌ Connect error', err);
       }
     };
 
+    // React to account / network changes
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
-        initializeEthers();
+        initEthers();
       } else {
-        disconnect();
+        teardown();
       }
     });
 
@@ -274,49 +250,36 @@
       }
     });
 
-    async function initializeEthers() {
-      const wagmiProvider = provider();
-      const wsProvider   = new ethers.providers.Web3Provider(
-        wagmiProvider, 'any'
-      );
-      signer = wsProvider.getSigner();
+    async function initEthers() {
+      const wagmiProv = provider();
+      const web3P     = new ethers.providers.Web3Provider(wagmiProv, 'any');
+      signer          = web3P.getSigner();
 
+      // UI updates
       document.getElementById('wallet-button').textContent =
         '…' + account.slice(-4);
       document.getElementById('status').textContent = 'Connected';
       document.getElementById('mint-button').disabled = false;
       document.getElementById('claim-button').disabled = false;
 
-      nftContract     = new ethers.Contract(
-        NFT_ADDRESS, NFT_ABI, signer
-      );
-      stakingContract = new ethers.Contract(
-        STAKING_ADDRESS, STAKING_ABI, signer
-      );
-      stakingRead     = new ethers.Contract(
-        STAKING_ADDRESS, STAKING_ABI, wsProvider
-      );
+      // Contracts
+      nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
+      stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+      stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, web3P);
 
       attachHandlers();
-      await populateOwned();
-      await populateStaked();
-      await updateStats();
+      await refreshAll();
     }
 
-    function disconnect() {
-      signer = account = nftContract =
-      stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent =
-        'Connect Wallet';
-      document.getElementById('status').textContent =
-        'Disconnected';
+    function teardown() {
+      signer = account = nftContract = stakingContract = stakingRead = null;
+      document.getElementById('wallet-button').textContent = 'Connect Wallet';
+      document.getElementById('status').textContent = 'Disconnected';
       document.getElementById('mint-button').disabled = true;
       document.getElementById('stake-select').innerHTML = '';
       document.getElementById('unstake-select').innerHTML = '';
-      document.getElementById('staked-info').textContent =
-        'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent =
-        'Rewards: 0 S';
+      document.getElementById('staked-info').textContent = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
       document.getElementById('stake-status').textContent = '';
       document.getElementById('claim-button').disabled = true;
     }
@@ -329,11 +292,8 @@
           const cost = await nftContract.feeForPower(p);
           const tx   = await nftContract.mint(p, { value: cost });
           await tx.wait();
-          document.getElementById('status').textContent =
-            'Mint successful!';
-          await populateOwned();
-          await populateStaked();
-          await updateStats();
+          document.getElementById('status').textContent = 'Mint successful!';
+          await refreshAll();
         } catch (e) {
           document.getElementById('status').textContent = e.message;
         }
@@ -344,32 +304,21 @@
           document.getElementById('stake-select').selectedOptions
         ).map(o => +o.value);
         if (!ids.length) return;
+
         try {
-          document.getElementById('stake-status').textContent =
-            'Checking approval…';
-          const approved = await nftContract.isApprovedForAll(
-            account, STAKING_ADDRESS
-          );
-          if (!approved) {
-            document.getElementById('stake-status').textContent =
-              'Approving…';
-            const txA = await nftContract.setApprovalForAll(
-              STAKING_ADDRESS, true
-            );
-            await txA.wait();
+          document.getElementById('stake-status').textContent = 'Checking approval…';
+          if (!(await nftContract.isApprovedForAll(account, STAKING_ADDRESS))) {
+            document.getElementById('stake-status').textContent = 'Approving…';
+            const a = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
+            await a.wait();
           }
-          document.getElementById('stake-status').textContent =
-            'Staking…';
+          document.getElementById('stake-status').textContent = 'Staking…';
           const tx = await stakingContract.stake(ids);
           await tx.wait();
-          document.getElementById('stake-status').textContent =
-            'Staked!';
-          await populateOwned();
-          await populateStaked();
-          await updateStats();
+          document.getElementById('stake-status').textContent = 'Staked!';
+          await refreshAll();
         } catch (e) {
-          document.getElementById('stake-status').textContent =
-            e.message;
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
 
@@ -378,36 +327,35 @@
           document.getElementById('unstake-select').selectedOptions
         ).map(o => +o.value);
         if (!ids.length) return;
+
         try {
-          document.getElementById('stake-status').textContent =
-            'Unstaking…';
+          document.getElementById('stake-status').textContent = 'Unstaking…';
           const tx = await stakingContract.unstake(ids);
           await tx.wait();
-          document.getElementById('stake-status').textContent =
-            'Unstaked!';
-          await populateOwned();
-          await populateStaked();
-          await updateStats();
+          document.getElementById('stake-status').textContent = 'Unstaked!';
+          await refreshAll();
         } catch (e) {
-          document.getElementById('stake-status').textContent =
-            e.message;
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
 
       document.getElementById('claim-button').onclick = async () => {
         try {
-          document.getElementById('stake-status').textContent =
-            'Claiming…';
+          document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
-          document.getElementById('stake-status').textContent =
-            'Claimed!';
-          await updateStats();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await refreshAll();
         } catch (e) {
-          document.getElementById('stake-status').textContent =
-            e.message;
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
+    }
+
+    async function refreshAll() {
+      await populateOwned();
+      await populateStaked();
+      await updateStats();
     }
 
     async function populateOwned() {
@@ -428,8 +376,7 @@
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
       try {
-        const [, , , tokenIds, powers] =
-          await stakingRead.getUserStake(account);
+        const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
         tokenIds.forEach((id, i) => {
           const o = document.createElement('option');
           o.value      = id.toString();
