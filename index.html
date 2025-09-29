@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+      script-src 'self' https://cdn.jsdelivr.net https://esm.sh 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
@@ -197,7 +197,7 @@
     import { publicProvider } from 'https://esm.sh/@wagmi/core/providers/public';
     import { InjectedConnector } from 'https://esm.sh/@wagmi/core/connectors/injected';
 
-    // --- Wagmi setup for Sonic Testnet ---
+    // Wagmi setup for Sonic Testnet
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -209,9 +209,10 @@
       [sonicTestnet],
       [publicProvider()]
     );
+    const injectedConnector = new InjectedConnector({ chains });
     const client = createClient({
       autoConnect: true,
-      connectors: [new InjectedConnector({ chains })],
+      connectors: [injectedConnector],
       provider
     });
 
@@ -261,7 +262,7 @@
     });
 
     async function initializeEthers() {
-      const wagmiProvider = provider(); // from wagmi
+      const wagmiProvider = provider();
       providerEthers = new ethers.providers.Web3Provider(wagmiProvider, 'any');
       signer = providerEthers.getSigner();
       document.getElementById('wallet-button').textContent = '…' + account.slice(-4);
@@ -280,7 +281,7 @@
     }
 
     document.getElementById('wallet-button').onclick = () => {
-      client.connect({ connector: new InjectedConnector({ chains }) });
+      client.connect({ connector: injectedConnector });
     };
 
     function disconnect() {
