@@ -42,13 +42,116 @@
       margin-bottom: var(--gap);
       letter-spacing: 2px;
     }
-    /* all your other CSS unchanged… */
+    .banner-wrapper {
+      max-width: 300px;
+      margin: 0 auto calc(var(--gap)*1.5);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    }
+    .banner-wrapper img {
+      width: 100%;
+      display: block;
+    }
+    .lower-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+      gap: var(--gap);
+    }
+    .box {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: var(--gap);
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .box:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--neon);
+      text-align: center;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 4px var(--neon);
+    }
+    label {
+      font-weight: 500;
+      margin-bottom: .5rem;
+      color: var(--text-light);
+    }
+    select, input {
+      width: 100%;
+      padding: .6rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: border var(--transition);
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--neon);
+    }
+    button {
+      padding: .75rem;
+      border: 2px solid var(--neon);
+      background: transparent;
+      color: var(--neon);
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      margin: 0 auto;
+    }
+    button:hover {
+      background: var(--neon-dim);
+      color: #fff;
+    }
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .info {
+      text-align: center;
+      margin: .75rem 0;
+      font-size: .95rem;
+    }
+    #status, #stake-status {
+      text-align: center;
+      margin-top: .5rem;
+      min-height: 1.2em;
+      font-size: .9rem;
+      color: var(--neon);
+    }
+    .socials {
+      text-align: center;
+      margin-top: var(--gap);
+    }
+    .socials a {
+      margin: 0 .5rem;
+      display: inline-block;
+    }
+    .socials img {
+      width: 28px;
+      height: 28px;
+      filter: drop-shadow(0 0 4px var(--neon));
+    }
   </style>
 </head>
 <body>
   <div class="brand">InFlow</div>
 
-  <!-- UPDATED: Replace the old Connect Wallet button with RainbowKit’s React mount point -->
+  <!-- RainbowKit ConnectButton mount point -->
   <div id="connect-button"></div>
 
   <div class="banner-wrapper">
@@ -112,7 +215,7 @@
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
-  <!-- Mount your React/Wagmi app -->
+  <!-- Mount Vite/React entrypoint -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
