@@ -16,9 +16,15 @@
     " />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InFlow</title>
+
+  <!-- Roboto font and RainbowKit CSS -->
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
     rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/@rainbow-me/rainbowkit@0.4.14/styles.css" />
+
   <style>
     :root {
       --neon: #00ffe1;
@@ -46,18 +52,14 @@
       margin-bottom: var(--gap);
       letter-spacing: 2px;
     }
-    #wallet-button {
-      position: fixed; top: var(--gap); right: var(--gap);
-      padding: .6rem 1.2rem;
-      border: 2px solid var(--neon);
-      background: transparent; color: var(--neon);
-      border-radius: var(--radius);
-      font-weight: 500; cursor: pointer;
-      transition: background var(--transition), color var(--transition);
+    #connect-button {
+      position: fixed;
+      top: var(--gap);
+      right: var(--gap);
       z-index: 10;
     }
-    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
     .lower-section {
+      margin-top: 4rem;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: var(--gap);
@@ -68,7 +70,8 @@
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: var(--radius);
       padding: var(--gap);
-      display: flex; flex-direction: column;
+      display: flex;
+      flex-direction: column;
       transition: transform var(--transition), box-shadow var(--transition);
     }
     .box:hover {
@@ -77,7 +80,8 @@
     }
     h1 {
       font-size: 1.8rem; font-weight: 700;
-      color: var(--neon); text-align: center;
+      color: var(--neon);
+      text-align: center;
       margin-bottom: 1rem;
       text-shadow: 0 0 4px var(--neon);
     }
@@ -115,10 +119,12 @@
 </head>
 <body>
   <div class="brand">InFlow</div>
-  <button id="wallet-button">Connect Wallet</button>
+
+  <!-- RainbowKit ConnectButton mount point -->
+  <div id="connect-button"></div>
 
   <div class="lower-section">
-    <!-- Mint -->
+    <!-- Mint Card -->
     <div class="box">
       <h1>Mint NFT</h1>
       <label for="power-select">Select Power & Price</label>
@@ -138,7 +144,7 @@
       <div id="status" class="info">Disconnected</div>
     </div>
 
-    <!-- Stake / Unstake -->
+    <!-- Staking Card -->
     <div class="box">
       <h1>Stake & Unstake</h1>
       <label for="stake-select">Your NFTs (Power)</label>
@@ -155,35 +161,35 @@
       <div id="stake-status" class="info"></div>
     </div>
 
-    <!-- Coming Soon -->
+    <!-- Coming Soon Card -->
     <div class="box">
       <h1>Coming Soon</h1>
       <p class="info">Redeem utilities launching shortly!</p>
     </div>
   </div>
 
-  <script type="module">
-    // ethers.js from jsDelivr
-    import { ethers }
-      from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+  <!-- React & ReactDOM UMD builds -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    // Wagmi Core v2.21.2 via Unpkg
+  <script type="module">
+    import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
     import {
+      WagmiConfig,
       createClient,
       configureChains,
       watchAccount,
       watchNetwork
     } from 'https://unpkg.com/@wagmi/core@2.21.2/dist/index.module.js';
-
-    // publicProvider from Core’s providers
     import { publicProvider }
       from 'https://unpkg.com/@wagmi/core@2.21.2/dist/providers/public/index.module.js';
+    import {
+      getDefaultWallets,
+      RainbowKitProvider,
+      ConnectButton
+    } from 'https://unpkg.com/@rainbow-me/rainbowkit@0.4.14/dist/index.module.js';
 
-    // InjectedConnector from Standalone Connectors
-    import { InjectedConnector }
-      from 'https://unpkg.com/@wagmi/connectors@0.4.14/dist/injected/index.module.js';
-
-    // Sonic Testnet chain config
+    // 1) Define Sonic Testnet
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -192,19 +198,39 @@
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
-    // Build Wagmi client
-    const { chains, provider } = configureChains(
+    // 2) Configure chains & providers
+    const { chains, provider, webSocketProvider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
     );
-    const connector = new InjectedConnector({ chains });
-    const client = createClient({
-      autoConnect: true,
-      connectors: [connector],
-      provider
+
+    // 3) RainbowKit default wallets
+    const { connectors } = getDefaultWallets({
+      appName: 'InFlow',
+      chains
     });
 
-    // Addresses & ABIs
+    // 4) Create Wagmi client
+    const wagmiClient = createClient({
+      autoConnect: true,
+      connectors,
+      provider,
+      webSocketProvider
+    });
+
+    // 5) Mount the ConnectButton
+    ReactDOM.createRoot(document.getElementById('connect-button'))
+      .render(
+        React.createElement(
+          WagmiConfig, { client: wagmiClient },
+          React.createElement(
+            RainbowKitProvider, { chains },
+            React.createElement(ConnectButton, { showBalance: false })
+          )
+        )
+      );
+
+    // 6) Contract addresses & ABIs
     const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
@@ -229,23 +255,14 @@
     let nftContract, stakingContract, stakingRead;
 
     // Disable UI until connected
-    document.getElementById('mint-button').disabled = true;
+    document.getElementById('mint-button').disabled  = true;
     document.getElementById('claim-button').disabled = true;
 
-    // Connect Wallet
-    document.getElementById('wallet-button').onclick = async () => {
-      try {
-        await client.connect({ connector });
-      } catch (err) {
-        console.error('❌ Connection failed:', err);
-      }
-    };
-
-    // React to account & network changes
+    // 7) Watch for account & network changes
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
-        initEthers();
+        initializeEthers();
       } else {
         teardown();
       }
@@ -257,15 +274,13 @@
       }
     });
 
-    async function initEthers() {
+    async function initializeEthers() {
       const wagmiProv = provider();
       const web3p     = new ethers.providers.Web3Provider(wagmiProv, 'any');
       signer          = web3p.getSigner();
 
-      document.getElementById('wallet-button').textContent =
-        '…' + account.slice(-4);
       document.getElementById('status').textContent = 'Connected';
-      document.getElementById('mint-button').disabled = false;
+      document.getElementById('mint-button').disabled  = false;
       document.getElementById('claim-button').disabled = false;
 
       nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
@@ -278,15 +293,14 @@
 
     function teardown() {
       signer = account = nftContract = stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent = 'Connect Wallet';
-      document.getElementById('status').textContent        = 'Disconnected';
-      document.getElementById('mint-button').disabled      = true;
-      document.getElementById('stake-select').innerHTML    = '';
-      document.getElementById('unstake-select').innerHTML  = '';
-      document.getElementById('staked-info').textContent   = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
-      document.getElementById('stake-status').textContent  = '';
-      document.getElementById('claim-button').disabled     = true;
+      document.getElementById('status').textContent           = 'Disconnected';
+      document.getElementById('mint-button').disabled         = true;
+      document.getElementById('stake-select').innerHTML       = '';
+      document.getElementById('unstake-select').innerHTML     = '';
+      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent     = '';
+      document.getElementById('claim-button').disabled        = true;
     }
 
     function attachHandlers() {
@@ -295,7 +309,7 @@
         try {
           document.getElementById('status').textContent = 'Minting…';
           const cost = await nftContract.feeForPower(p);
-          const tx = await nftContract.mint(p, { value: cost });
+          const tx   = await nftContract.mint(p, { value: cost });
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
           await refreshAll();
@@ -309,6 +323,7 @@
           document.getElementById('stake-select').selectedOptions
         ).map(o => +o.value);
         if (!ids.length) return;
+
         try {
           document.getElementById('stake-status').textContent = 'Checking approval…';
           if (!(await nftContract.isApprovedForAll(account, STAKING_ADDRESS))) {
@@ -329,6 +344,7 @@
           document.getElementById('unstake-select').selectedOptions
         ).map(o => +o.value);
         if (!ids.length) return;
+
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
           await (await stakingContract.unstake(ids)).wait();
@@ -363,7 +379,7 @@
       const bal = await nftContract.balanceOf(account);
       for (let i = 0; i < bal; i++) {
         const id = await nftContract.tokenOfOwnerByIndex(account, i);
-        const p = await nftContract.tokenPower(id);
+        const p  = await nftContract.tokenPower(id);
         const opt = document.createElement('option');
         opt.value = id.toString();
         opt.textContent = `#${id} (Power: ${p})`;
