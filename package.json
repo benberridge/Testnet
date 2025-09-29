@@ -1,0 +1,20 @@
+{
+  "name": "inflow",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "wagmi": "^2.21.2",
+    "@rainbow-me/rainbowkit": "^0.4.14",
+    "ethers": "^5.7.2"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0",
+    "@vitejs/plugin-react": "^3.0.0"
+  }
+}
