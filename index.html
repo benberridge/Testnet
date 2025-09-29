@@ -4,11 +4,7 @@
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src
-        'self'
-        https://cdn.jsdelivr.net
-        https://esm.sh
-        'unsafe-inline';
+      script-src 'self' https://cdn.jsdelivr.net https://esm.sh 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
@@ -29,86 +25,82 @@
       --gap: 1.5rem;
       --transition: 0.3s ease;
     }
-    * { box-sizing: border-box; margin:0; padding:0 }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
       color: var(--text-light);
       font-family: 'Roboto', sans-serif;
       padding: var(--gap);
-      line-height:1.4;
+      line-height: 1.4;
     }
     .brand {
-      text-align:center;
-      font-size:2.5rem;
-      font-weight:700;
-      color:var(--neon);
-      text-shadow:0 0 8px var(--neon),0 0 16px var(--neon);
-      margin-bottom:var(--gap);
-      letter-spacing:2px;
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--neon);
+      text-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon);
+      margin-bottom: var(--gap);
+      letter-spacing: 2px;
     }
     #wallet-button {
-      position:fixed; top:var(--gap); right:var(--gap);
-      padding:.6rem 1.2rem;
-      border:2px solid var(--neon);
-      background:transparent; color:var(--neon);
-      border-radius:var(--radius);
-      font-weight:500; cursor:pointer;
-      transition:background var(--transition),color var(--transition);
-      z-index:10;
+      position: fixed; top: var(--gap); right: var(--gap);
+      padding: .6rem 1.2rem;
+      border: 2px solid var(--neon);
+      background: transparent; color: var(--neon);
+      border-radius: var(--radius);
+      font-weight: 500; cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      z-index: 10;
     }
-    #wallet-button:hover { background:var(--neon-dim); color:#fff }
+    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
     .lower-section {
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(320px,1fr));
-      gap:var(--gap);
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+      gap: var(--gap);
     }
     .box {
-      background:var(--card-bg);
-      backdrop-filter:blur(12px);
-      border:1px solid rgba(255,255,255,0.1);
-      border-radius:var(--radius);
-      padding:var(--gap);
-      display:flex; flex-direction:column;
-      transition:transform var(--transition),box-shadow var(--transition);
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: var(--gap);
+      display: flex; flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition);
     }
     .box:hover {
-      transform:translateY(-6px);
-      box-shadow:0 8px 32px rgba(0,0,0,0.6);
+      transform: translateY(-6px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
     h1 {
-      font-size:1.8rem; font-weight:700;
-      color:var(--neon); text-align:center;
-      margin-bottom:1rem;
-      text-shadow:0 0 4px var(--neon);
+      font-size: 1.8rem; font-weight: 700;
+      color: var(--neon); text-align: center;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 4px var(--neon);
     }
     label {
-      font-weight:500; margin-bottom:.5rem;
-      color:var(--text-light);
+      font-weight: 500; margin-bottom: .5rem;
+      color: var(--text-light);
     }
-    select,input {
-      width:100%; padding:.6rem; margin-bottom:1rem;
-      border:1px solid rgba(255,255,255,0.2);
-      border-radius:8px;
-      background:rgba(255,255,255,0.03);
-      color:var(--text-light);
-      font-size:1rem;
-      transition:border var(--transition);
+    select, input {
+      width: 100%; padding: .6rem; margin-bottom: 1rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: border var(--transition);
     }
-    select:focus,input:focus { outline:none; border-color:var(--neon) }
+    select:focus, input:focus { outline: none; border-color: var(--neon); }
     button {
-      padding:.75rem; border:2px solid var(--neon);
-      background:transparent; color:var(--neon);
-      border-radius:8px; font-weight:500;
-      cursor:pointer;
-      transition:background var(--transition),color var(--transition);
-      margin:0 auto;
+      padding: .75rem; border: 2px solid var(--neon);
+      background: transparent; color: var(--neon);
+      border-radius: 8px; font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      margin: 0 auto;
     }
-    button:hover { background:var(--neon-dim); color:#fff }
-    .info {
-      text-align:center;
-      margin:.75rem 0;
-      font-size:.95rem;
-    }
+    button:hover { background: var(--neon-dim); color: #fff; }
+    .info { text-align: center; margin: .75rem 0; font-size: .95rem; }
   </style>
 </head>
 <body>
@@ -153,7 +145,7 @@
       <div id="stake-status" class="info"></div>
     </div>
 
-    <!-- Coming Soon -->
+    <!-- Coming Soon Card -->
     <div class="box">
       <h1>Coming Soon</h1>
       <p class="info">Redeem utilities launching shortly!</p>
@@ -165,28 +157,24 @@
     import { ethers } from
       'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // wagmi/core v2.21.2 as a bundled ESM build from esm.sh
+    // Wagmi Core v2.21.2 bundled ESM from esm.sh
     import {
       createClient,
       configureChains,
       watchAccount,
-      watchNetwork
+      watchNetwork,
+      publicProvider,
+      InjectedConnector
     } from
       'https://esm.sh/@wagmi/core@2.21.2?bundle';
 
-    // sub‐modules come from the same version, no @version in path
-    import { publicProvider }
-      from 'https://esm.sh/@wagmi/core/providers/public?bundle';
-    import { InjectedConnector }
-      from 'https://esm.sh/@wagmi/core/connectors/injected?bundle';
-
     // Sonic Testnet config
     const sonicTestnet = {
-      id:14601,
-      name:'Sonic Testnet',
-      network:'sonic-testnet',
-      nativeCurrency:{name:'Sonic',symbol:'S',decimals:18},
-      rpcUrls:{default:'https://rpc.testnet.soniclabs.com'}
+      id: 14601,
+      name: 'Sonic Testnet',
+      network: 'sonic-testnet',
+      nativeCurrency: { name: 'Sonic', symbol: 'S', decimals: 18 },
+      rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
     const { chains, provider } = configureChains(
@@ -194,17 +182,17 @@
       [publicProvider()]
     );
 
-    const injectedConnector = new InjectedConnector({chains});
+    const injectedConnector = new InjectedConnector({ chains });
     const client = createClient({
-      autoConnect:true,
-      connectors:[injectedConnector],
+      autoConnect: true,
+      connectors: [injectedConnector],
       provider
     });
 
-    // Contract addresses & ABIs
+    // Addresses & ABIs
     const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
-    const REQUIRED_CHAIN_ID=14601;
+    const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
       "function balanceOf(address) view returns (uint256)",
@@ -225,173 +213,177 @@
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
-    document.getElementById('mint-button').disabled = true;
-    document.getElementById('claim-button').disabled= true;
+    document.getElementById('mint-button').disabled  = true;
+    document.getElementById('claim-button').disabled = true;
 
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
-        const res = await client.connect({connector:injectedConnector});
-        console.log('✅ Wagmi.connect:',res);
-      } catch(e) {
-        console.error('❌ Wagmi.connect failed',e);
+        const res = await client.connect({ connector: injectedConnector });
+        console.log('✅ Wagmi.connect:', res);
+      } catch (err) {
+        console.error('❌ Wagmi.connect failed:', err);
       }
     };
 
-    watchAccount(({address,isConnected})=>{
-      if(isConnected&&address){
-        account=address;
-        init();
+    watchAccount(({ address, isConnected }) => {
+      if (isConnected && address) {
+        account = address;
+        initializeEthers();
       } else {
-        teardown();
-      }
-    });
-    watchNetwork(({chain})=>{
-      if(chain?.id!==REQUIRED_CHAIN_ID){
-        document.getElementById('status').textContent='Please switch to Sonic Testnet';
+        disconnect();
       }
     });
 
-    async function init(){
-      const wagmiProv = provider();
-      const web3p     = new ethers.providers.Web3Provider(wagmiProv,'any');
-      signer          = web3p.getSigner();
+    watchNetwork(({ chain }) => {
+      if (chain?.id !== REQUIRED_CHAIN_ID) {
+        document.getElementById('status').textContent =
+          'Please switch to Sonic Testnet';
+      }
+    });
 
-      document.getElementById('wallet-button').textContent='…'+account.slice(-4);
-      document.getElementById('status').textContent='Connected';
-      document.getElementById('mint-button').disabled=false;
-      document.getElementById('claim-button').disabled=false;
+    async function initializeEthers() {
+      const wagmiProvider = provider();
+      const web3P = new ethers.providers.Web3Provider(wagmiProvider, 'any');
+      signer = web3P.getSigner();
 
-      nftContract      = new ethers.Contract(NFT_ADDRESS,NFT_ABI,signer);
-      stakingContract  = new ethers.Contract(STAKING_ADDRESS,STAKING_ABI,signer);
-      stakingRead      = new ethers.Contract(STAKING_ADDRESS,STAKING_ABI,web3p);
+      document.getElementById('wallet-button').textContent =
+        '…' + account.slice(-4);
+      document.getElementById('status').textContent = 'Connected';
+      document.getElementById('mint-button').disabled  = false;
+      document.getElementById('claim-button').disabled = false;
+
+      nftContract     = new ethers.Contract(NFT_ADDRESS,     NFT_ABI,     signer);
+      stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+      stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, web3P);
 
       attachHandlers();
       await refreshAll();
     }
 
-    function teardown(){
-      signer=account=nftContract=stakingContract=stakingRead=null;
-      document.getElementById('wallet-button').textContent='Connect Wallet';
-      document.getElementById('status').textContent='Disconnected';
-      document.getElementById('mint-button').disabled=true;
-      document.getElementById('stake-select').innerHTML='';
-      document.getElementById('unstake-select').innerHTML='';
-      document.getElementById('staked-info').textContent='Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent='Rewards: 0 S';
-      document.getElementById('stake-status').textContent='';
-      document.getElementById('claim-button').disabled=true;
+    function disconnect() {
+      signer = account = nftContract = stakingContract = stakingRead = null;
+      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
+      document.getElementById('status').textContent           = 'Disconnected';
+      document.getElementById('mint-button').disabled         = true;
+      document.getElementById('stake-select').innerHTML       = '';
+      document.getElementById('unstake-select').innerHTML     = '';
+      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent     = '';
+      document.getElementById('claim-button').disabled        = true;
     }
 
-    function attachHandlers(){
-      document.getElementById('mint-button').onclick=async()=>{
-        const p=+document.getElementById('power-select').value;
-        try{
-          document.getElementById('status').textContent='Minting…';
-          const cost=await nftContract.feeForPower(p);
-          const tx=await nftContract.mint(p,{value:cost});
+    function attachHandlers() {
+      document.getElementById('mint-button').onclick = async () => {
+        const p = +document.getElementById('power-select').value;
+        try {
+          document.getElementById('status').textContent = 'Minting…';
+          const cost = await nftContract.feeForPower(p);
+          const tx   = await nftContract.mint(p, { value: cost });
           await tx.wait();
-          document.getElementById('status').textContent='Mint successful!';
+          document.getElementById('status').textContent = 'Mint successful!';
           await refreshAll();
-        }catch(e){
-          document.getElementById('status').textContent=e.message;
+        } catch (e) {
+          document.getElementById('status').textContent = e.message;
         }
       };
 
-      document.getElementById('stake-button').onclick=async()=>{
-        const ids=Array.from(
+      document.getElementById('stake-button').onclick = async () => {
+        const ids = Array.from(
           document.getElementById('stake-select').selectedOptions
-        ).map(o=>+o.value);
-        if(!ids.length)return;
-        try{
-          document.getElementById('stake-status').textContent='Checking approval…';
-          if(!(await nftContract.isApprovedForAll(account,STAKING_ADDRESS))){
-            document.getElementById('stake-status').textContent='Approving…';
-            await (await nftContract.setApprovalForAll(STAKING_ADDRESS,true)).wait();
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Checking approval…';
+          if (!(await nftContract.isApprovedForAll(account, STAKING_ADDRESS))) {
+            document.getElementById('stake-status').textContent = 'Approving…';
+            await (await nftContract.setApprovalForAll(STAKING_ADDRESS, true)).wait();
           }
-          document.getElementById('stake-status').textContent='Staking…';
+          document.getElementById('stake-status').textContent = 'Staking…';
           await (await stakingContract.stake(ids)).wait();
-          document.getElementById('stake-status').textContent='Staked!';
+          document.getElementById('stake-status').textContent = 'Staked!';
           await refreshAll();
-        }catch(e){
-          document.getElementById('stake-status').textContent=e.message;
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
 
-      document.getElementById('unstake-button').onclick=async()=>{
-        const ids=Array.from(
+      document.getElementById('unstake-button').onclick = async () => {
+        const ids = Array.from(
           document.getElementById('unstake-select').selectedOptions
-        ).map(o=>+o.value);
-        if(!ids.length)return;
-        try{
-          document.getElementById('stake-status').textContent='Unstaking…';
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Unstaking…';
           await (await stakingContract.unstake(ids)).wait();
-          document.getElementById('stake-status').textContent='Unstaked!';
+          document.getElementById('stake-status').textContent = 'Unstaked!';
           await refreshAll();
-        }catch(e){
-          document.getElementById('stake-status').textContent=e.message;
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
 
-      document.getElementById('claim-button').onclick=async()=>{
-        try{
-          document.getElementById('stake-status').textContent='Claiming…';
+      document.getElementById('claim-button').onclick = async () => {
+        try {
+          document.getElementById('stake-status').textContent = 'Claiming…';
           await (await stakingContract.claimRewards()).wait();
-          document.getElementById('stake-status').textContent='Claimed!';
+          document.getElementById('stake-status').textContent = 'Claimed!';
           await refreshAll();
-        }catch(e){
-          document.getElementById('stake-status').textContent=e.message;
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
     }
 
-    async function refreshAll(){
+    async function refreshAll() {
       await populateOwned();
       await populateStaked();
       await updateStats();
     }
 
-    async function populateOwned(){
-      const sel=document.getElementById('stake-select');
-      sel.innerHTML='';
-      const bal=await nftContract.balanceOf(account);
-      for(let i=0;i<bal;i++){
-        const id=await nftContract.tokenOfOwnerByIndex(account,i);
-        const p=await nftContract.tokenPower(id);
-        const o=document.createElement('option');
-        o.value=id.toString();
-        o.textContent=`#${id} (Power: ${p})`;
+    async function populateOwned() {
+      const sel = document.getElementById('stake-select');
+      sel.innerHTML = '';
+      const bal = await nftContract.balanceOf(account);
+      for (let i = 0; i < bal; i++) {  
+        const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const p  = await nftContract.tokenPower(id);
+        const o  = document.createElement('option');
+        o.value      = id.toString();
+        o.textContent = `#${id} (Power: ${p})`;
         sel.append(o);
       }
     }
 
-    async function populateStaked(){
-      const sel=document.getElementById('unstake-select');
-      sel.innerHTML='';
-      try{
-        const[, , , tokenIds, powers]=
-          await stakingRead.getUserStake(account);
-        tokenIds.forEach((id,i)=>{
-          const o=document.createElement('option');
-          o.value=id.toString();
-          o.textContent=`#${id} (Power: ${powers[i]})`;
+    async function populateStaked() {
+      const sel = document.getElementById('unstake-select');
+      sel.innerHTML = '';
+      try {
+        const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
+        tokenIds.forEach((id, i) => {
+          const o = document.createElement('option');
+          o.value      = id.toString();
+          o.textContent = `#${id} (Power: ${powers[i]})`;
           sel.append(o);
         });
-      }catch(e){
-        console.error('populateStaked failed',e);
+      } catch (e) {
+        console.error('populateStaked failed', e);
       }
     }
 
-    async function updateStats(){
-      try{
-        const[nftCount,powerStaked,pendingRaw]=
+    async function updateStats() {
+      try {
+        const [nftCount, powerStaked, pendingRaw] =
           await stakingRead.getUserStake(account);
-        document.getElementById('staked-info').textContent=
+        document.getElementById('staked-info').textContent =
           `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
-        document.getElementById('pending-rewards').textContent=
-          `Rewards: ${ethers.utils.formatUnits(pendingRaw,18)} S`;
-      }catch(e){
-        console.error('updateStats failed',e);
+        document.getElementById('pending-rewards').textContent =
+          `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
+      } catch (e) {
+        console.error('updateStats failed', e);
       }
     }
   </script>
