@@ -189,16 +189,19 @@
 
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+
+    // Wagmi core from Skypack “pinned” build
     import {
       createClient,
       configureChains,
       watchAccount,
       watchNetwork
-    } from 'https://cdn.skypack.dev/@wagmi/core';
-    import { publicProvider } from 'https://cdn.skypack.dev/@wagmi/core/providers/public';
-    import { InjectedConnector } from 'https://cdn.skypack.dev/@wagmi/core/connectors/injected';
+    } from 'https://cdn.skypack.dev/pin/@wagmi/core@v2.21.2-T0u8lC12dPsQKZcqrBtK/mode=raw';
 
-    // Wagmi setup for Sonic Testnet
+    import { publicProvider } from 'https://cdn.skypack.dev/pin/@wagmi/core@v2.21.2-T0u8lC12dPsQKZcqrBtK/mode=raw/providers/public';
+    import { InjectedConnector } from 'https://cdn.skypack.dev/pin/@wagmi/core@v2.21.2-T0u8lC12dPsQKZcqrBtK/mode=raw/connectors/injected';
+
+    // Sonic Testnet config
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -206,10 +209,12 @@
       nativeCurrency: { name: 'Sonic', symbol: 'S', decimals: 18 },
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
+
     const { chains, provider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
     );
+
     const injectedConnector = new InjectedConnector({ chains });
     const client = createClient({
       autoConnect: true,
@@ -217,8 +222,8 @@
       provider
     });
 
-    const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
-    const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
+    const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
+    const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
@@ -247,7 +252,6 @@
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
-    // Log clicks to debug
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
@@ -266,6 +270,7 @@
         disconnect();
       }
     });
+
     watchNetwork(({ chain }) => {
       if (chain?.id !== REQUIRED_CHAIN_ID) {
         document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
@@ -349,7 +354,8 @@
         }
       };
 
-      document.getElementById('unstake-button').onclick = async () => {
+      document.getElementById('unstake-button').onclick = async ()
+      => {
         const ids = Array.from(
           document.getElementById('unstake-select').selectedOptions
         ).map(o => +o.value);
