@@ -12,8 +12,9 @@
     "/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>InFlow</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-        rel="stylesheet"/>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"/>
   <style>
     :root {
       --neon: #00ffe1;
@@ -126,8 +127,9 @@
   <button id="wallet-button">Connect Wallet</button>
 
   <div class="banner-wrapper">
-    <img src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
-         alt="InFlow Banner"/>
+    <img
+      src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
+      alt="InFlow Banner"/>
   </div>
 
   <div class="lower-section">
@@ -180,9 +182,9 @@
   </div>
 
   <div class="socials">
-    <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"/></a>
-    <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"/></a>
-    <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"/></a>
+    <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"></a>
+    <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"></a>
+    <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
   <script type="module">
@@ -196,6 +198,7 @@
     import { publicProvider } from 'https://cdn.skypack.dev/@wagmi/core/providers/public';
     import { InjectedConnector } from 'https://cdn.skypack.dev/@wagmi/core/connectors/injected';
 
+    // Sonic Testnet config
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -204,11 +207,11 @@
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
+    // Wagmi client setup
     const { chains, provider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
     );
-
     const injectedConnector = new InjectedConnector({ chains });
     const client = createClient({
       autoConnect: true,
@@ -229,7 +232,6 @@
       "function isApprovedForAll(address owner, address operator) view returns (bool)",
       "function setApprovalForAll(address operator, bool approved)"
     ];
-
     const STAKING_ABI = [
       "function stake(uint256[])",
       "function unstake(uint256[])",
@@ -246,6 +248,7 @@
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
+    // Connect wallet handler
     document.getElementById('wallet-button').onclick = async () => {
       console.log('🔹 Connect clicked');
       try {
@@ -264,7 +267,6 @@
         disconnect();
       }
     });
-
     watchNetwork(({ chain }) => {
       if (chain?.id !== REQUIRED_CHAIN_ID) {
         document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
@@ -305,17 +307,123 @@
     }
 
     function attachHandlers() {
-      document.getElementById('mint-button').onclick = async () => { /* … */ };
-      document.getElementById('stake-button').onclick = async () => { /* … */ };
-      document.getElementById('unstake-button').onclick = async () => {
-        /* now correctly defined on one line */
+      document.getElementById('mint-button').onclick = async () => {
+        const p = +document.getElementById('power-select').value;
+        try {
+          const cost = await nftContract.feeForPower(p);
+          const tx   = await nftContract.mint(p, { value: cost });
+          document.getElementById('status').textContent = 'Minting…';
+          await tx.wait();
+          document.getElementById('status').textContent = 'Mint successful!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('status').textContent = e.message;
+        }
       };
-      document.getElementById('claim-button').onclick = async () => { /* … */ };
+
+      document.getElementById('stake-button').onclick = async () => {
+        const ids = Array.from(
+          document.getElementById('stake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Checking approval…';
+          const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
+          if (!approved) {
+            document.getElementById('stake-status').textContent = 'Approving…';
+            const txA = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
+            await txA.wait();
+          }
+
+          document.getElementById('stake-status').textContent = 'Staking…';
+          const tx = await stakingContract.stake(ids);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Staked!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('unstake-button').onclick = async () => {
+        const ids = Array.from(
+          document.getElementById('unstake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Unstaking…';
+          const tx = await stakingContract.unstake(ids);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Unstaked!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('claim-button').onclick = async () => {
+        try {
+          document.getElementById('stake-status').textContent = 'Claiming…';
+          const tx = await stakingContract.claimRewards();
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
     }
 
-    async function populateOwned() { /* … */ }
-    async function populateStaked() { /* … */ }
-    async function updateStats() { /* … */ }
+    async function populateOwned() {
+      const sel = document.getElementById('stake-select');
+      sel.innerHTML = '';
+      const bal = await nftContract.balanceOf(account);
+      for (let i = 0; i < bal; i++) {
+        const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const p  = await nftContract.tokenPower(id);
+        const o  = document.createElement('option');
+        o.value      = id.toString();
+        o.textContent = `#${id} (Power: ${p})`;
+        sel.append(o);
+      }
+    }
+
+    async function populateStaked() {
+      const sel = document.getElementById('unstake-select');
+      sel.innerHTML = '';
+      try {
+        const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
+        tokenIds.forEach((id, i) => {
+          const o = document.createElement('option');
+          o.value      = id.toString();
+          o.textContent = `#${id} (Power: ${powers[i]})`;
+          sel.append(o);
+        });
+      } catch (e) {
+        console.error('populateStaked failed', e);
+      }
+    }
+
+    async function updateStats() {
+      try {
+        const [nftCount, powerStaked, pendingRaw] =
+          await stakingRead.getUserStake(account);
+        document.getElementById('staked-info').textContent =
+          `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
+        document.getElementById('pending-rewards').textContent =
+          `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
+      } catch (e) {
+        console.error('updateStats failed', e);
+      }
+    }
   </script>
 </body>
 </html>
