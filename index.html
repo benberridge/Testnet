@@ -27,7 +27,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
+      background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
       color: var(--text-light);
       font-family: 'Roboto', sans-serif;
       padding: var(--gap);
@@ -55,7 +55,7 @@
     }
     .lower-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: var(--gap);
     }
     .box {
@@ -151,8 +151,8 @@
 <body>
   <div class="brand">InFlow</div>
 
-  <!-- RainbowKit ConnectButton mount point -->
-  <div id="connect-button"></div>
+  <!-- React mounts here -->
+  <div id="root"></div>
 
   <div class="banner-wrapper">
     <img
@@ -215,7 +215,7 @@
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
-  <!-- Mount Vite/React entrypoint -->
+  <!-- Vite/React entrypoint -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
