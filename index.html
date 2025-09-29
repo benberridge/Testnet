@@ -6,9 +6,9 @@
       default-src 'self';
       script-src 'self' https://cdn.jsdelivr.net https://esm.sh 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
-      connect-src 'self' https://rpc.testnet.soniclabs.com https://esm.sh;
+      connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
-      img-src 'self' data: https://*.ardrive.net;
+      img-src 'self' data:;
     "/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>InFlow</title>
@@ -25,9 +25,9 @@
       --gap: 1.5rem;
       --transition: 0.3s ease;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
     body {
-      background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
+      background: radial-gradient(circle at center, #1a1a3d, #0a0a1f);
       color: var(--text-light);
       font-family: 'Roboto', sans-serif;
       padding: var(--gap);
@@ -52,10 +52,10 @@
       transition: background var(--transition), color var(--transition);
       z-index: 10;
     }
-    #wallet-button:hover { background: var(--neon-dim); color: #fff; }
+    #wallet-button:hover { background: var(--neon-dim); color: #fff }
     .lower-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
       gap: var(--gap);
     }
     .box {
@@ -99,8 +99,8 @@
       transition: background var(--transition), color var(--transition);
       margin: 0 auto;
     }
-    button:hover { background: var(--neon-dim); color: #fff; }
-    .info { text-align: center; margin: .75rem 0; font-size: .95rem; }
+    button:hover { background: var(--neon-dim); color: #fff }
+    .info { text-align: center; margin: .75rem 0; font-size: .95rem }
   </style>
 </head>
 <body>
@@ -150,22 +150,24 @@
   </div>
 
   <script type="module">
-    import { ethers } from
-      'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
+    // 1) ethers.js
+    import { ethers }
+      from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
+    // 2) Wagmi Core bundle (createClient, configureChains, watchAccount, watchNetwork, publicProvider)
     import {
       createClient,
       configureChains,
       watchAccount,
       watchNetwork,
       publicProvider
-    } from
-      'https://esm.sh/@wagmi/core@2.21.2?bundle';
+    } from 'https://esm.sh/@wagmi/core@2.21.2?bundle';
 
-    // deep‐import the injected connector factory (export name: `injected`)
-    import { injected } from
-      'https://esm.sh/@wagmi/connectors@0.4.14?bundle';
+    // 3) Injected connector factory from jsDelivr (correct ESM path)
+    import { injected }
+      from 'https://cdn.jsdelivr.net/npm/@wagmi/connectors@0.4.14/dist/esm/injected/index.js';
 
+    // Sonic Testnet configuration
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -174,59 +176,66 @@
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
+    // Build Wagmi client
     const { chains, provider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
     );
 
-    // call the factory, passing your chains
+    // Call the connector factory with your chains
     const connector = injected({ chains });
+
     const client = createClient({
       autoConnect: true,
       connectors: [connector],
       provider
     });
 
+    // Contract addresses & ABIs
     const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
 
     const NFT_ABI = [
-      "function balanceOf(address) view returns (uint256)",
-      "function tokenOfOwnerByIndex(address,uint256) view returns (uint256)",
-      "function tokenPower(uint256) view returns (uint8)",
-      "function feeForPower(uint8) view returns (uint256)",
-      "function mint(uint8) payable",
-      "function isApprovedForAll(address,address) view returns (bool)",
-      "function setApprovalForAll(address,bool)"
+      'function balanceOf(address) view returns (uint256)',
+      'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
+      'function tokenPower(uint256) view returns (uint8)',
+      'function feeForPower(uint8) view returns (uint256)',
+      'function mint(uint8) payable',
+      'function isApprovedForAll(address,address) view returns (bool)',
+      'function setApprovalForAll(address,bool)'
     ];
+
     const STAKING_ABI = [
-      "function stake(uint256[])",
-      "function unstake(uint256[])",
-      "function claimRewards()",
-      "function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])"
+      'function stake(uint256[])',
+      'function unstake(uint256[])',
+      'function claimRewards()',
+      'function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])'
     ];
 
     let signer, account;
     let nftContract, stakingContract, stakingRead;
 
+    // Disable until wallet connects
     document.getElementById('mint-button').disabled  = true;
     document.getElementById('claim-button').disabled = true;
 
+    // Connect Wallet button
     document.getElementById('wallet-button').onclick = async () => {
       try {
         await client.connect({ connector });
       } catch (err) {
-        console.error(err);
+        console.error('Connection failed:', err);
       }
     };
 
+    // React to account/network changes
     watchAccount(({ address, isConnected }) => {
       if (isConnected && address) {
         account = address;
         initializeEthers();
       } else {
-        disconnect();
+        teardown();
       }
     });
 
@@ -238,9 +247,9 @@
     });
 
     async function initializeEthers() {
-      const wagmiProvider = provider();
-      const web3p = new ethers.providers.Web3Provider(wagmiProvider, 'any');
-      signer = web3p.getSigner();
+      const wagmiProv = provider();
+      const web3p     = new ethers.providers.Web3Provider(wagmiProv, 'any');
+      signer          = web3p.getSigner();
 
       document.getElementById('wallet-button').textContent =
         '…' + account.slice(-4);
@@ -248,7 +257,7 @@
       document.getElementById('mint-button').disabled  = false;
       document.getElementById('claim-button').disabled = false;
 
-      nftContract     = new ethers.Contract(NFT_ADDRESS,     NFT_ABI,     signer);
+      nftContract     = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
       stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
       stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, web3p);
 
@@ -256,17 +265,17 @@
       await refreshAll();
     }
 
-    function disconnect() {
+    function teardown() {
       signer = account = nftContract = stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent = 'Connect Wallet';
-      document.getElementById('status').textContent        = 'Disconnected';
-      document.getElementById('mint-button').disabled      = true;
-      document.getElementById('stake-select').innerHTML    = '';
-      document.getElementById('unstake-select').innerHTML  = '';
-      document.getElementById('staked-info').textContent   = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
-      document.getElementById('stake-status').textContent  = '';
-      document.getElementById('claim-button').disabled     = true;
+      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
+      document.getElementById('status').textContent           = 'Disconnected';
+      document.getElementById('mint-button').disabled         = true;
+      document.getElementById('stake-select').innerHTML       = '';
+      document.getElementById('unstake-select').innerHTML     = '';
+      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent     = '';
+      document.getElementById('claim-button').disabled        = true;
     }
 
     function attachHandlers() {
@@ -357,7 +366,7 @@
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
       try {
-        const [,, , tokenIds, powers] = await stakingRead.getUserStake(account);
+        const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
         tokenIds.forEach((id, i) => {
           const o = document.createElement('option');
           o.value      = id.toString();
