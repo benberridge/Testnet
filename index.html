@@ -153,11 +153,11 @@
   </div>
 
   <script type="module">
-    // ethers.js
+    // 1) ethers.js
     import { ethers } from
       'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    // Wagmi Core + publicProvider
+    // 2) Wagmi core + publicProvider
     import {
       createClient,
       configureChains,
@@ -167,11 +167,11 @@
     } from
       'https://esm.sh/@wagmi/core@2.21.2?bundle';
 
-    // InjectedConnector from connectors package
+    // 3) InjectedConnector from standalone connectors package
     import { InjectedConnector }
-      from 'https://esm.sh/@wagmi/connectors@0.4.14?bundle';
+      from 'https://esm.sh/@wagmi/connectors?bundle';
 
-    // Sonic Testnet
+    // Sonic Testnet config
     const sonicTestnet = {
       id: 14601,
       name: 'Sonic Testnet',
@@ -180,7 +180,7 @@
       rpcUrls: { default: 'https://rpc.testnet.soniclabs.com' }
     };
 
-    // Create Wagmi client
+    // Build Wagmi client
     const { chains, provider } = configureChains(
       [sonicTestnet],
       [publicProvider()]
@@ -192,6 +192,7 @@
       provider
     });
 
+    // Contract addresses & ABIs
     const NFT_ADDRESS       = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS   = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
@@ -205,6 +206,7 @@
       "function isApprovedForAll(address,address) view returns (bool)",
       "function setApprovalForAll(address,bool)"
     ];
+
     const STAKING_ABI = [
       "function stake(uint256[])",
       "function unstake(uint256[])",
@@ -265,15 +267,15 @@
 
     function disconnect() {
       signer = account = nftContract = stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent = 'Connect Wallet';
-      document.getElementById('status').textContent        = 'Disconnected';
-      document.getElementById('mint-button').disabled      = true;
-      document.getElementById('stake-select').innerHTML    = '';
-      document.getElementById('unstake-select').innerHTML  = '';
-      document.getElementById('staked-info').textContent   = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent = 'Rewards: 0 S';
-      document.getElementById('stake-status').textContent  = '';
-      document.getElementById('claim-button').disabled     = true;
+      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
+      document.getElementById('status').textContent           = 'Disconnected';
+      document.getElementById('mint-button').disabled         = true;
+      document.getElementById('stake-select').innerHTML       = '';
+      document.getElementById('unstake-select').innerHTML     = '';
+      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent     = '';
+      document.getElementById('claim-button').disabled        = true;
     }
 
     function attachHandlers() {
