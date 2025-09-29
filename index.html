@@ -298,19 +298,125 @@
     }
 
     function attachHandlers() {
-      // ... [no changes to your existing mint/stake/unstake/claim handlers] ...
+      document.getElementById('mint-button').onclick = async () => {
+        const p = +document.getElementById('power-select').value;
+        try {
+          const cost = await nftContract.feeForPower(p);
+          const tx   = await nftContract.mint(p, { value: cost });
+          document.getElementById('status').textContent = 'Minting…';
+          await tx.wait();
+          document.getElementById('status').textContent = 'Mint successful!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('stake-button').onclick = async () => {
+        const ids = Array.from(
+          document.getElementById('stake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Checking approval…';
+          const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
+          if (!approved) {
+            document.getElementById('stake-status').textContent = 'Approving…';
+            const txA = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
+            await txA.wait();
+          }
+
+          document.getElementById('stake-status').textContent = 'Staking…';
+          const tx = await stakingContract.stake(ids);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Staked!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('unstake-button').onclick = async () => {
+        const ids = Array.from(
+          document.getElementById('unstake-select').selectedOptions
+        ).map(o => +o.value);
+        if (!ids.length) return;
+
+        try {
+          document.getElementById('stake-status').textContent = 'Unstaking…';
+          const tx = await stakingContract.unstake(ids);
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Unstaked!';
+          await populateOwned();
+          await populateStaked();
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
+
+      document.getElementById('claim-button').onclick = async () => {
+        try {
+          document.getElementById('stake-status').textContent = 'Claiming…';
+          const tx = await stakingContract.claimRewards();
+          await tx.wait();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await updateStats();
+        } catch (e) {
+          document.getElementById('stake-status').textContent = e.message;
+        }
+      };
     }
 
+    // Populate the “Your NFTs (Power)” dropdown
     async function populateOwned() {
-      // ... [existing code] ...
+      const sel = document.getElementById('stake-select');
+      sel.innerHTML = '';
+      const bal = await nftContract.balanceOf(account);
+      for (let i = 0; i < bal; i++) {
+        const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const p  = await nftContract.tokenPower(id);
+        const o  = document.createElement('option');
+        o.value      = id.toString();
+        o.textContent = `#${id} (Power: ${p})`;
+        sel.append(o);
+      }
     }
 
+    // Populate the “Staked NFTs” dropdown using tokenIds & powers
     async function populateStaked() {
-      // ... [existing code] ...
+      const sel = document.getElementById('unstake-select');
+      sel.innerHTML = '';
+      try {
+        const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
+        tokenIds.forEach((id, i) => {
+          const o = document.createElement('option');
+          o.value      = id.toString();
+          o.textContent = `#${id} (Power: ${powers[i]})`;
+          sel.append(o);
+        });
+      } catch (e) {
+        console.error('populateStaked failed', e);
+      }
     }
 
+    // Update the summary info at top of the staking card
     async function updateStats() {
-      // ... [existing code] ...
+      try {
+        const [nftCount, powerStaked, pendingRaw] =
+          await stakingRead.getUserStake(account);
+        document.getElementById('staked-info').textContent =
+          `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
+        document.getElementById('pending-rewards').textContent =
+          `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
+      } catch (e) {
+        console.error('updateStats failed', e);
+      }
     }
   </script>
 </body>
