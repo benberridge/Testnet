@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval';
+      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
       style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
       connect-src 'self' https://rpc.testnet.soniclabs.com;
       font-src 'self' https://fonts.gstatic.com;
@@ -118,13 +118,6 @@
       width: 28px; height: 28px;
       filter: drop-shadow(0 0 4px var(--neon));
     }
-    .debug {
-      position: fixed; left: 12px; bottom: 12px;
-      background: rgba(0,0,0,0.6); color: #fff;
-      padding: .5rem .75rem; border-radius: 8px;
-      font-size: .85rem; max-width: 40%;
-      z-index: 9999; overflow: auto; max-height: 30vh;
-    }
   </style>
 </head>
 <body>
@@ -192,8 +185,6 @@
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
-  <div class="debug" id="debug-log" aria-hidden="false">debug log</div>
-
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
@@ -224,34 +215,19 @@
     let provider, signer, account;
     let nftContract, stakingContract, stakingRead;
 
-    const debugEl = document.getElementById('debug-log');
-    function dbg(...args) {
-      console.log(...args);
-      try {
-        debugEl.textContent = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' | ');
-      } catch {}
-    }
-
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
     async function connectWallet() {
-      dbg('connectWallet start', { hasWindowEthereum: !!window.ethereum });
       if (!window.ethereum) {
         alert('Please install a Web3 wallet');
         return;
       }
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        dbg('eth_requestAccounts result', accounts);
-        await handleAccountsChanged(accounts);
-      } catch (err) {
-        dbg('eth_requestAccounts error', err);
-      }
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      handleAccountsChanged(accounts);
     }
 
     function disconnect() {
-      dbg('disconnecting');
       account = signer = nftContract = stakingContract = stakingRead = null;
       document.getElementById('wallet-button').textContent    = 'Connect Wallet';
       document.getElementById('status').textContent           = 'Disconnected';
@@ -265,41 +241,24 @@
     }
 
     async function handleAccountsChanged(accounts) {
-      dbg('handleAccountsChanged', accounts);
       if (!accounts || accounts.length === 0) {
         disconnect();
         return;
       }
 
-      try {
-        provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
-        signer   = provider.getSigner();
-        account  = await signer.getAddress();
-        dbg('got account', account);
-      } catch (err) {
-        dbg('provider/signer error', err);
-        document.getElementById('status').textContent = 'Wallet error';
-        return;
-      }
+      provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+      signer   = provider.getSigner();
+      account  = await signer.getAddress();
+      const net = await provider.getNetwork();
 
-      let net;
-      try {
-        net = await provider.getNetwork();
-        dbg('network', net);
-      } catch (err) {
-        dbg('getNetwork failed', err);
-      }
-
-      if (net && net.chainId !== REQUIRED_CHAIN_ID) {
+      if (net.chainId !== REQUIRED_CHAIN_ID) {
         try {
-          dbg('switching chain to Sonic Testnet');
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x3929' }]
           });
           return handleAccountsChanged(accounts);
-        } catch (switchErr) {
-          dbg('wallet_switchEthereumChain failed', switchErr);
+        } catch {
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
         }
@@ -315,9 +274,9 @@
       stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, provider);
 
       attachHandlers();
-      try { await populateOwned(); } catch (e) { dbg('populateOwned failed', e); }
-      try { await populateStaked(); } catch (e) { dbg('populateStaked failed', e); }
-      try { await updateStats(); } catch (e) { dbg('updateStats failed', e); }
+      await populateOwned();
+      await populateStaked();
+      await updateStats();
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
@@ -325,21 +284,17 @@
     function attachHandlers() {
       document.getElementById('mint-button').onclick = async () => {
         const p = +document.getElementById('power-select').value;
-        dbg('mint clicked, power', p);
         try {
           const cost = await nftContract.feeForPower(p);
-          dbg('feeForPower', cost.toString());
           const tx   = await nftContract.mint(p, { value: cost });
           document.getElementById('status').textContent = 'Minting…';
-          dbg('mint tx sent', tx);
           await tx.wait();
           document.getElementById('status').textContent = 'Mint successful!';
           await populateOwned();
           await populateStaked();
           await updateStats();
         } catch (e) {
-          dbg('mint error', e);
-          document.getElementById('status').textContent = e && e.message ? e.message : String(e);
+          document.getElementById('status').textContent = e.message;
         }
       };
 
@@ -347,31 +302,26 @@
         const ids = Array.from(
           document.getElementById('stake-select').selectedOptions
         ).map(o => +o.value);
-        dbg('stake clicked', ids);
         if (!ids.length) return;
 
         try {
           document.getElementById('stake-status').textContent = 'Checking approval…';
           const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
-          dbg('isApprovedForAll', approved);
           if (!approved) {
             document.getElementById('stake-status').textContent = 'Approving…';
             const txA = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
-            dbg('approval tx', txA);
             await txA.wait();
           }
 
           document.getElementById('stake-status').textContent = 'Staking…';
           const tx = await stakingContract.stake(ids);
-          dbg('stake tx', tx);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Staked!';
           await populateOwned();
           await populateStaked();
           await updateStats();
         } catch (e) {
-          dbg('stake error', e);
-          document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
 
@@ -379,36 +329,30 @@
         const ids = Array.from(
           document.getElementById('unstake-select').selectedOptions
         ).map(o => +o.value);
-        dbg('unstake clicked', ids);
         if (!ids.length) return;
 
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
           const tx = await stakingContract.unstake(ids);
-          dbg('unstake tx', tx);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Unstaked!';
           await populateOwned();
           await populateStaked();
           await updateStats();
         } catch (e) {
-          dbg('unstake error', e);
-          document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
 
       document.getElementById('claim-button').onclick = async () => {
-        dbg('claim clicked');
         try {
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
-          dbg('claim tx', tx);
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Claimed!';
           await updateStats();
         } catch (e) {
-          dbg('claim error', e);
-          document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
+          document.getElementById('stake-status').textContent = e.message;
         }
       };
     }
@@ -416,30 +360,26 @@
     async function populateOwned() {
       const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
-      try {
-        const bal = await nftContract.balanceOf(account);
-        dbg('balanceOf', bal.toString());
-        for (let i = 0; i < bal; i++) {
-          const id = await nftContract.tokenOfOwnerByIndex(account, i);
-          const p  = await nftContract.tokenPower(id);
-          const o  = document.createElement('option');
-          o.value  = id.toString();
-          o.textContent = `#${id} (Power: ${p})`;
-          sel.append(o);
-        }
-      } catch (e) {
-        dbg('populateOwned failed', e);
+      const bal = await nftContract.balanceOf(account);
+      for (let i = 0; i < bal; i++) {
+        const id = await nftContract.tokenOfOwnerByIndex(account, i);
+        const p  = await nftContract.tokenPower(id);
+        const o  = document.createElement('option');
+        o.value  = id.toString();
+        o.textContent = `#${id} (Power: ${p})`;
+        sel.append(o);
       }
     }
 
+    // UPDATED: now fetch tokenIds & powers from getUserStake
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
 
       try {
-        const [, , , tokenIds, powers] =
+        const [, , , tokenIds, powers] = 
           await stakingRead.getUserStake(account);
-        dbg('getUserStake returned', { tokenIds, powers });
+
         tokenIds.forEach((id, i) => {
           const o = document.createElement('option');
           o.value = id.toString();
@@ -447,7 +387,6 @@
           sel.append(o);
         });
       } catch (e) {
-        dbg('populateStaked failed', e);
         console.error('populateStaked failed', e);
       }
     }
@@ -463,22 +402,14 @@
         document.getElementById('pending-rewards').textContent =
           `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
 
-        dbg("Detailed position:", tokenIds.map((id, i) => ({
+        console.log("Detailed position:", tokenIds.map((id, i) => ({
           tokenId: id.toString(),
           power:   powers[i]
         })));
       } catch (e) {
-        dbg('updateStats failed', e);
         console.error('updateStats failed', e);
       }
     }
-
-    // show provider details on load if available
-    window.addEventListener('load', () => {
-      try {
-        dbg('window.ethereum', { present: !!window.ethereum, providerType: window.ethereum && window.ethereum.request ? 'EIP-1193' : 'unknown' });
-      } catch (e) { dbg('load error', e); }
-    });
   </script>
 </body>
 </html>
