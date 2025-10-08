@@ -118,6 +118,7 @@
       width: 28px; height: 28px;
       filter: drop-shadow(0 0 4px var(--neon));
     }
+    .debug { position: fixed; left: 12px; bottom: 12px; background: rgba(0,0,0,0.6); color: #fff; padding: .5rem .75rem; border-radius: 8px; font-size: .85rem; max-width: 40%; z-index: 9999; overflow: auto; max-height: 30vh; }
   </style>
 </head>
 <body>
@@ -185,21 +186,16 @@
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
+  <div class="debug" id="debug-log" aria-hidden="false">debug</div>
+
   <script type="module">
     import { ethers } from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
     const NFT_ADDRESS     = '0xBA1636Ba8627D1f1e50FEdaf74F1A54DAAd83EE8';
     const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
-    const REQUIRED_CHAIN_ID = 14601;
-
-    const SONIC_CHAIN_ID_HEX = '0x3929';
-    const SONIC_PARAMS = [{
-      chainId: SONIC_CHAIN_ID_HEX,
-      chainName: 'Sonic Testnet',
-      nativeCurrency: { name: 'S', symbol: 'S', decimals: 18 },
-      rpcUrls: ['https://rpc.testnet.soniclabs.com'],
-      blockExplorerUrls: []
-    }];
+    const REQUIRED_CHAIN_ID = 14601;           // decimal
+    const SONIC_CHAIN_ID_HEX = '0x3929';       // hex for 14601
+    const SONIC_RPC = 'https://rpc.testnet.soniclabs.com';
 
     const NFT_ABI = [
       "function balanceOf(address owner) view returns (uint256)",
@@ -221,40 +217,63 @@
       "function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])"
     ];
 
+    const SONIC_PARAMS = [{
+      chainId: SONIC_CHAIN_ID_HEX,
+      chainName: 'Sonic Testnet',
+      nativeCurrency: { name: 'S', symbol: 'S', decimals: 18 },
+      rpcUrls: [SONIC_RPC],
+      blockExplorerUrls: ['https://testnet.sonicscan.org']
+    }];
+
     let provider, signer, account;
     let nftContract, stakingContract, stakingRead;
+    const debugEl = document.getElementById('debug-log');
+    function dbg(...args) {
+      console.log(...args);
+      try {
+        debugEl.textContent = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' | ');
+      } catch {}
+    }
 
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
-    async function connectWallet() {
-      if (!window.ethereum) {
-        alert('Please install a Web3 wallet');
-        return;
-      }
+    // helper: verify the RPC at SONIC_RPC returns the expected chainId
+    async function rpcReportsCorrectChain() {
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        await handleAccountsChanged(accounts);
-      } catch (err) {
-        document.getElementById('status').textContent = 'Connection rejected';
-        console.error('eth_requestAccounts error', err);
+        const resp = await fetch(SONIC_RPC, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] })
+        });
+        const data = await resp.json();
+        dbg('RPC eth_chainId response', data);
+        if (data && data.result) {
+          // result is hex string
+          return parseInt(data.result, 16) === REQUIRED_CHAIN_ID;
+        }
+      } catch (e) {
+        dbg('rpcReportsCorrectChain error', e);
       }
+      return false;
     }
 
-    function disconnect() {
-      account = signer = nftContract = stakingContract = stakingRead = null;
-      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
-      document.getElementById('status').textContent           = 'Disconnected';
-      document.getElementById('mint-button').disabled         = true;
-      document.getElementById('stake-select').innerHTML       = '';
-      document.getElementById('unstake-select').innerHTML     = '';
-      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
-      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
-      document.getElementById('stake-status').textContent     = '';
-      document.getElementById('claim-button').disabled        = true;
-    }
-
+    // attempt to switch; if wallet complains chain unknown, attempt to add then switch
     async function trySwitchOrAdd() {
+      if (!window.ethereum || !window.ethereum.request) {
+        dbg('no window.ethereum');
+        return false;
+      }
+
+      // sanity: if RPC doesn't report correct chain, bail early and show debug
+      const rpcOk = await rpcReportsCorrectChain();
+      dbg('rpcOk', rpcOk);
+      if (!rpcOk) {
+        dbg('RPC endpoint does not report expected chainId; check SONIC_RPC or try alternate RPC');
+        document.getElementById('status').textContent = 'Sonic RPC mismatch';
+        return false;
+      }
+
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
@@ -262,33 +281,48 @@
         });
         return true;
       } catch (err) {
-        // Detect unrecognized chain error (4902) or wallet-specific message
+        dbg('wallet_switchEthereumChain failed', err);
         const dataCode = err && err.data && err.data.code;
-        const isUnrecognized = err && (err.code === 4902 || dataCode === 4902 || /Unrecognized chain ID|4902/i.test(err.message || ''));
-
+        const isUnrecognized = err && (err.code === 4902 || dataCode === 4902 || /Unrecognized chain/i.test(err.message || ''));
         if (isUnrecognized) {
           try {
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: SONIC_PARAMS
             });
-            // After adding, attempt switch again
+            // retry switch
             await window.ethereum.request({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: SONIC_CHAIN_ID_HEX }]
             });
             return true;
           } catch (addErr) {
-            console.error('wallet_addEthereumChain failed', addErr);
+            dbg('wallet_addEthereumChain failed', addErr);
             return false;
           }
         }
-        console.error('wallet_switchEthereumChain failed', err);
         return false;
       }
     }
 
+    async function connectWallet() {
+      dbg('connectWallet start', { hasWindowEthereum: !!window.ethereum });
+      if (!window.ethereum) {
+        alert('Please install a Web3 wallet');
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        dbg('accounts', accounts);
+        await handleAccountsChanged(accounts);
+      } catch (e) {
+        dbg('eth_requestAccounts error', e);
+        document.getElementById('status').textContent = 'Connection rejected';
+      }
+    }
+
     async function handleAccountsChanged(accounts) {
+      dbg('handleAccountsChanged', accounts);
       if (!accounts || accounts.length === 0) {
         disconnect();
         return;
@@ -298,18 +332,20 @@
       signer   = provider.getSigner();
 
       try {
-        account  = await signer.getAddress();
-      } catch (err) {
-        console.error('getAddress failed', err);
+        account = await signer.getAddress();
+      } catch (e) {
+        dbg('getAddress failed', e);
         document.getElementById('status').textContent = 'Wallet error';
         return;
       }
 
+      // get current chain; if wrong, try to add/switch
       let net;
       try {
         net = await provider.getNetwork();
-      } catch (err) {
-        console.error('getNetwork failed', err);
+        dbg('provider network', net);
+      } catch (e) {
+        dbg('getNetwork failed', e);
       }
 
       if (!net || net.chainId !== REQUIRED_CHAIN_ID) {
@@ -318,13 +354,8 @@
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
         }
-        // If switch succeeded, refresh network object
-        try {
-          net = await provider.getNetwork();
-        } catch (err) {
-          console.error('getNetwork after switch failed', err);
-        }
-        // if still wrong, bail
+        // refresh provider network after switch
+        try { net = await provider.getNetwork(); dbg('network after switch', net); } catch (e) { dbg('getNetwork after switch failed', e); }
         if (!net || net.chainId !== REQUIRED_CHAIN_ID) {
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
@@ -341,9 +372,23 @@
       stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, provider);
 
       attachHandlers();
-      try { await populateOwned(); } catch (e) { console.error('populateOwned', e); }
-      try { await populateStaked(); } catch (e) { console.error('populateStaked', e); }
-      try { await updateStats(); } catch (e) { console.error('updateStats', e); }
+      try { await populateOwned(); } catch (e) { dbg('populateOwned failed', e); }
+      try { await populateStaked(); } catch (e) { dbg('populateStaked failed', e); }
+      try { await updateStats(); } catch (e) { dbg('updateStats failed', e); }
+    }
+
+    function disconnect() {
+      dbg('disconnecting');
+      account = signer = nftContract = stakingContract = stakingRead = null;
+      document.getElementById('wallet-button').textContent    = 'Connect Wallet';
+      document.getElementById('status').textContent           = 'Disconnected';
+      document.getElementById('mint-button').disabled         = true;
+      document.getElementById('stake-select').innerHTML       = '';
+      document.getElementById('unstake-select').innerHTML     = '';
+      document.getElementById('staked-info').textContent      = 'Staked NFTs: 0 | Power: 0';
+      document.getElementById('pending-rewards').textContent  = 'Rewards: 0 S';
+      document.getElementById('stake-status').textContent     = '';
+      document.getElementById('claim-button').disabled        = true;
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
@@ -361,17 +406,14 @@
           await populateStaked();
           await updateStats();
         } catch (e) {
-          console.error('mint error', e);
+          dbg('mint error', e);
           document.getElementById('status').textContent = e && e.message ? e.message : String(e);
         }
       };
 
       document.getElementById('stake-button').onclick = async () => {
-        const ids = Array.from(
-          document.getElementById('stake-select').selectedOptions
-        ).map(o => +o.value);
+        const ids = Array.from(document.getElementById('stake-select').selectedOptions).map(o => +o.value);
         if (!ids.length) return;
-
         try {
           document.getElementById('stake-status').textContent = 'Checking approval…';
           const approved = await nftContract.isApprovedForAll(account, STAKING_ADDRESS);
@@ -380,7 +422,6 @@
             const txA = await nftContract.setApprovalForAll(STAKING_ADDRESS, true);
             await txA.wait();
           }
-
           document.getElementById('stake-status').textContent = 'Staking…';
           const tx = await stakingContract.stake(ids);
           await tx.wait();
@@ -389,17 +430,14 @@
           await populateStaked();
           await updateStats();
         } catch (e) {
-          console.error('stake error', e);
+          dbg('stake error', e);
           document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
         }
       };
 
       document.getElementById('unstake-button').onclick = async () => {
-        const ids = Array.from(
-          document.getElementById('unstake-select').selectedOptions
-        ).map(o => +o.value);
+        const ids = Array.from(document.getElementById('unstake-select').selectedOptions).map(o => +o.value);
         if (!ids.length) return;
-
         try {
           document.getElementById('stake-status').textContent = 'Unstaking…';
           const tx = await stakingContract.unstake(ids);
@@ -409,7 +447,7 @@
           await populateStaked();
           await updateStats();
         } catch (e) {
-          console.error('unstake error', e);
+          dbg('unstake error', e);
           document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
         }
       };
@@ -422,7 +460,7 @@
           document.getElementById('stake-status').textContent = 'Claimed!';
           await updateStats();
         } catch (e) {
-          console.error('claim error', e);
+          dbg('claim error', e);
           document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
         }
       };
@@ -442,18 +480,15 @@
           sel.append(o);
         }
       } catch (e) {
-        console.error('populateOwned failed', e);
+        dbg('populateOwned failed', e);
       }
     }
 
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
-
       try {
-        const [, , , tokenIds, powers] = 
-          await stakingRead.getUserStake(account);
-
+        const [, , , tokenIds, powers] = await stakingRead.getUserStake(account);
         tokenIds.forEach((id, i) => {
           const o = document.createElement('option');
           o.value = id.toString();
@@ -461,29 +496,29 @@
           sel.append(o);
         });
       } catch (e) {
-        console.error('populateStaked failed', e);
+        dbg('populateStaked failed', e);
       }
     }
 
     async function updateStats() {
       try {
-        const [nftCount, powerStaked, pendingRaw, tokenIds, powers] =
-          await stakingRead.getUserStake(account);
-
-        document.getElementById('staked-info').textContent =
-          `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
-
-        document.getElementById('pending-rewards').textContent =
-          `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
-
-        console.log("Detailed position:", tokenIds.map((id, i) => ({
-          tokenId: id.toString(),
-          power:   powers[i]
-        })));
+        const [nftCount, powerStaked, pendingRaw, tokenIds, powers] = await stakingRead.getUserStake(account);
+        document.getElementById('staked-info').textContent = `Staked NFTs: ${nftCount.toNumber()} | Power: ${powerStaked.toNumber()}`;
+        document.getElementById('pending-rewards').textContent = `Rewards: ${ethers.utils.formatUnits(pendingRaw, 18)} S`;
+        dbg("Detailed position:", tokenIds.map((id, i) => ({ tokenId: id.toString(), power: powers[i] })));
       } catch (e) {
-        console.error('updateStats failed', e);
+        dbg('updateStats failed', e);
       }
     }
+
+    // show provider status on load
+    window.addEventListener('load', async () => {
+      try {
+        dbg('window.ethereum', { present: !!window.ethereum, providerType: window.ethereum && window.ethereum.request ? 'EIP-1193' : 'unknown' });
+        const rpcOk = await rpcReportsCorrectChain();
+        dbg('SONIC_RPC reports expected chainId?', rpcOk);
+      } catch (e) { dbg('load error', e); }
+    });
   </script>
 </body>
 </html>
