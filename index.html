@@ -192,6 +192,15 @@
     const STAKING_ADDRESS = '0x7c21F33b651870A63ecAd4E2710E1B56061C7D36';
     const REQUIRED_CHAIN_ID = 14601;
 
+    const SONIC_CHAIN_ID_HEX = '0x3929';
+    const SONIC_PARAMS = [{
+      chainId: SONIC_CHAIN_ID_HEX,
+      chainName: 'Sonic Testnet',
+      nativeCurrency: { name: 'S', symbol: 'S', decimals: 18 },
+      rpcUrls: ['https://rpc.testnet.soniclabs.com'],
+      blockExplorerUrls: []
+    }];
+
     const NFT_ABI = [
       "function balanceOf(address owner) view returns (uint256)",
       "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
@@ -223,8 +232,13 @@
         alert('Please install a Web3 wallet');
         return;
       }
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      handleAccountsChanged(accounts);
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        await handleAccountsChanged(accounts);
+      } catch (err) {
+        document.getElementById('status').textContent = 'Connection rejected';
+        console.error('eth_requestAccounts error', err);
+      }
     }
 
     function disconnect() {
@@ -240,6 +254,40 @@
       document.getElementById('claim-button').disabled        = true;
     }
 
+    async function trySwitchOrAdd() {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: SONIC_CHAIN_ID_HEX }]
+        });
+        return true;
+      } catch (err) {
+        // Detect unrecognized chain error (4902) or wallet-specific message
+        const dataCode = err && err.data && err.data.code;
+        const isUnrecognized = err && (err.code === 4902 || dataCode === 4902 || /Unrecognized chain ID|4902/i.test(err.message || ''));
+
+        if (isUnrecognized) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: SONIC_PARAMS
+            });
+            // After adding, attempt switch again
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: SONIC_CHAIN_ID_HEX }]
+            });
+            return true;
+          } catch (addErr) {
+            console.error('wallet_addEthereumChain failed', addErr);
+            return false;
+          }
+        }
+        console.error('wallet_switchEthereumChain failed', err);
+        return false;
+      }
+    }
+
     async function handleAccountsChanged(accounts) {
       if (!accounts || accounts.length === 0) {
         disconnect();
@@ -248,17 +296,36 @@
 
       provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
       signer   = provider.getSigner();
-      account  = await signer.getAddress();
-      const net = await provider.getNetwork();
 
-      if (net.chainId !== REQUIRED_CHAIN_ID) {
+      try {
+        account  = await signer.getAddress();
+      } catch (err) {
+        console.error('getAddress failed', err);
+        document.getElementById('status').textContent = 'Wallet error';
+        return;
+      }
+
+      let net;
+      try {
+        net = await provider.getNetwork();
+      } catch (err) {
+        console.error('getNetwork failed', err);
+      }
+
+      if (!net || net.chainId !== REQUIRED_CHAIN_ID) {
+        const ok = await trySwitchOrAdd();
+        if (!ok) {
+          document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
+          return;
+        }
+        // If switch succeeded, refresh network object
         try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x3929' }]
-          });
-          return handleAccountsChanged(accounts);
-        } catch {
+          net = await provider.getNetwork();
+        } catch (err) {
+          console.error('getNetwork after switch failed', err);
+        }
+        // if still wrong, bail
+        if (!net || net.chainId !== REQUIRED_CHAIN_ID) {
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
         }
@@ -274,9 +341,9 @@
       stakingRead     = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, provider);
 
       attachHandlers();
-      await populateOwned();
-      await populateStaked();
-      await updateStats();
+      try { await populateOwned(); } catch (e) { console.error('populateOwned', e); }
+      try { await populateStaked(); } catch (e) { console.error('populateStaked', e); }
+      try { await updateStats(); } catch (e) { console.error('updateStats', e); }
     }
 
     document.getElementById('wallet-button').onclick = connectWallet;
@@ -294,7 +361,8 @@
           await populateStaked();
           await updateStats();
         } catch (e) {
-          document.getElementById('status').textContent = e.message;
+          console.error('mint error', e);
+          document.getElementById('status').textContent = e && e.message ? e.message : String(e);
         }
       };
 
@@ -321,7 +389,8 @@
           await populateStaked();
           await updateStats();
         } catch (e) {
-          document.getElementById('stake-status').textContent = e.message;
+          console.error('stake error', e);
+          document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
         }
       };
 
@@ -340,7 +409,8 @@
           await populateStaked();
           await updateStats();
         } catch (e) {
-          document.getElementById('stake-status').textContent = e.message;
+          console.error('unstake error', e);
+          document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
         }
       };
 
@@ -352,7 +422,8 @@
           document.getElementById('stake-status').textContent = 'Claimed!';
           await updateStats();
         } catch (e) {
-          document.getElementById('stake-status').textContent = e.message;
+          console.error('claim error', e);
+          document.getElementById('stake-status').textContent = e && e.message ? e.message : String(e);
         }
       };
     }
@@ -360,18 +431,21 @@
     async function populateOwned() {
       const sel = document.getElementById('stake-select');
       sel.innerHTML = '';
-      const bal = await nftContract.balanceOf(account);
-      for (let i = 0; i < bal; i++) {
-        const id = await nftContract.tokenOfOwnerByIndex(account, i);
-        const p  = await nftContract.tokenPower(id);
-        const o  = document.createElement('option');
-        o.value  = id.toString();
-        o.textContent = `#${id} (Power: ${p})`;
-        sel.append(o);
+      try {
+        const bal = await nftContract.balanceOf(account);
+        for (let i = 0; i < bal; i++) {
+          const id = await nftContract.tokenOfOwnerByIndex(account, i);
+          const p  = await nftContract.tokenPower(id);
+          const o  = document.createElement('option');
+          o.value  = id.toString();
+          o.textContent = `#${id} (Power: ${p})`;
+          sel.append(o);
+        }
+      } catch (e) {
+        console.error('populateOwned failed', e);
       }
     }
 
-    // UPDATED: now fetch tokenIds & powers from getUserStake
     async function populateStaked() {
       const sel = document.getElementById('unstake-select');
       sel.innerHTML = '';
