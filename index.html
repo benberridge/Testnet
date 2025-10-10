@@ -53,11 +53,14 @@
       display: inline-block;
       white-space: nowrap;
       will-change: transform;
-      animation: scroll-left 36s linear infinite; /* slowed 50%: was 18s -> now 36s */
+      transform: translateX(100%); /* ensure consistent start position to avoid jump */
+      animation: scroll-left 36s linear infinite;
+      animation-play-state: paused; /* prevent initial glitch; start when data loaded */
       font-weight: 500;
       color: var(--text-light);
       font-size: 0.95rem;
     }
+    .ticker.running { animation-play-state: running; }
     @keyframes scroll-left {
       0% { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
@@ -82,9 +85,9 @@
       margin-bottom: var(--gap);
       letter-spacing: 2px;
     }
-    /* Bring connect button forward above the rolling banner by increasing z-index */
+    /* Lower connect button so it's directly below the banner */
     #wallet-button {
-      position: fixed; top: calc(var(--gap)); right: var(--gap);
+      position: fixed; top: calc(var(--banner-h) + 8px); right: var(--gap);
       padding: .6rem 1.2rem;
       border: 2px solid var(--neon);
       background: transparent; color: var(--neon);
@@ -173,7 +176,7 @@
     <div class="ticker" id="rolling-stats">
       <span class="stat-pill">Total NFTs minted: <span id="stat-total-nfts">—</span></span>
       <span class="stat-pill">Total power minted: <span id="stat-total-power-minted">—</span></span>
-      <span class="stat-pill">Total $S Invested: <span id="stat-total-invested">—</span></span>
+      <span class="stat-pill">Total Invested: <span id="stat-total-invested">—</span></span>
       <span class="stat-pill">Total NFTs staked: <span id="stat-total-nfts-staked">—</span></span>
       <span class="stat-pill">Total power staked: <span id="stat-total-power-staked">—</span></span>
       <span class="stat-pill">Total rewards distributed: <span id="stat-total-rewards-distributed">N/A</span></span>
@@ -608,7 +611,8 @@
             const investedWei = bp.mul(ethers.BigNumber.from(totalPowerMinted));
             const investedInS = ethers.utils.formatUnits(investedWei, 18);
             const investedNoDecimals = investedInS.split('.')[0];
-            document.getElementById('stat-total-invested').textContent = investedNoDecimals + ' S';
+            // changed format to: $S XXX
+            document.getElementById('stat-total-invested').textContent = '$S ' + investedNoDecimals;
           } else {
             document.getElementById('stat-total-invested').textContent = 'N/A';
           }
@@ -671,8 +675,16 @@
         const rpcOk = await rpcReportsCorrectChain();
         dbg('SONIC_RPC reports expected chainId?', rpcOk);
       } catch (e) { dbg('load error', e); }
+
       // initial banner refresh using JSON-RPC provider (no wallet required)
       await refreshBannerStats();
+
+      // start ticker after initial stats refresh to avoid visual jump
+      try {
+        const ticker = document.getElementById('rolling-stats');
+        if (ticker) ticker.classList.add('running');
+      } catch (e) { dbg('ticker start failed', e); }
+
       // refresh periodically to keep rolling banner fresh
       setInterval(refreshBannerStats, 30_000);
     });
