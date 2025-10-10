@@ -519,8 +519,7 @@
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
-          document.getElementById('stake-status').textContent = 'Claimed!';
-          await refreshBannerStats();
+          document.getElementById('stake-status').textContent = 'Claimed!';          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('claim error', e);
@@ -653,13 +652,13 @@
           if (acc && totalPowerMinted) {
             const totalRewardsWei = acc.mul(totalPowerMinted).div(PRECISION);
             const totalRewardsStr = ethers.utils.formatUnits(totalRewardsWei, 18).split('.')[0];
-            document.getElementById('stat-total-rewards-distributed').textContent = totalRewardsStr + ' S';
+            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + totalRewardsStr;
           } else {
             // fallback to pool balance if we can't compute
             try {
               const bal = await readProvider.getBalance(STAKING_ADDRESS);
               const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
-              document.getElementById('stat-total-rewards-distributed').textContent = `${balStr} S (pool)`;
+              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + balStr + ' (pool)';
             } catch (e) {
               document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
             }
