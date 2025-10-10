@@ -22,15 +22,57 @@
       --radius: 16px;
       --gap: 1.5rem;
       --transition: 0.3s ease;
+      --banner-h: 48px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: radial-gradient(circle at center,#1a1a3d,#0a0a1f);
       color: var(--text-light);
       font-family: 'Roboto', sans-serif;
-      padding: var(--gap);
+      padding: calc(var(--gap) + var(--banner-h)) var(--gap) var(--gap);
       line-height: 1.4;
     }
+
+    /* Rolling banner (fixed top) */
+    .top-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--banner-h);
+      background: linear-gradient(90deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25));
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      z-index: 1000;
+      padding: 0 1rem;
+      backdrop-filter: blur(6px);
+    }
+    .ticker {
+      display: inline-block;
+      white-space: nowrap;
+      will-change: transform;
+      animation: scroll-left 18s linear infinite;
+      font-weight: 500;
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+    @keyframes scroll-left {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .stat-pill {
+      display: inline-block;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 6px 12px;
+      margin-right: 12px;
+      border-radius: 999px;
+      color: var(--neon);
+      box-shadow: 0 0 8px rgba(0,255,225,0.04);
+    }
+
     .brand {
       text-align: center;
       font-size: 2.5rem;
@@ -41,7 +83,7 @@
       letter-spacing: 2px;
     }
     #wallet-button {
-      position: fixed; top: var(--gap); right: var(--gap);
+      position: fixed; top: calc(var(--gap)); right: var(--gap);
       padding: .6rem 1.2rem;
       border: 2px solid var(--neon);
       background: transparent; color: var(--neon);
@@ -119,9 +161,24 @@
       filter: drop-shadow(0 0 4px var(--neon));
     }
     .debug { position: fixed; left: 12px; bottom: 12px; background: rgba(0,0,0,0.6); color: #fff; padding: .5rem .75rem; border-radius: 8px; font-size: .85rem; max-width: 40%; z-index: 9999; overflow: auto; max-height: 30vh; }
+    @media (max-width: 600px) {
+      .ticker { animation-duration: 26s; font-size: 0.85rem; }
+      body { padding-top: calc(var(--banner-h) + 12px); }
+    }
   </style>
 </head>
 <body>
+  <div class="top-banner" aria-hidden="false">
+    <div class="ticker" id="rolling-stats">
+      <span class="stat-pill">Total NFTs minted: <span id="stat-total-nfts">—</span></span>
+      <span class="stat-pill">Total power minted: <span id="stat-total-power-minted">—</span></span>
+      <span class="stat-pill">Total $S Invested: <span id="stat-total-invested">—</span></span>
+      <span class="stat-pill">Total NFTs staked: <span id="stat-total-nfts-staked">—</span></span>
+      <span class="stat-pill">Total power staked: <span id="stat-total-power-staked">—</span></span>
+      <span class="stat-pill">Total rewards distributed: <span id="stat-total-rewards-distributed">N/A</span></span>
+    </div>
+  </div>
+
   <div class="brand">InFlow</div>
   <button id="wallet-button">Connect Wallet</button>
 
@@ -196,7 +253,9 @@
     const REQUIRED_CHAIN_ID = 14601;           // decimal
     const SONIC_CHAIN_ID_HEX = '0x3909';       // hex for 14601
     const SONIC_RPC = 'https://rpc.testnet.soniclabs.com';
+    const PRECISION = ethers.BigNumber.from("1000000000000000000");
 
+    // Expanded ABIs for reading needed stats
     const NFT_ABI = [
       "function balanceOf(address owner) view returns (uint256)",
       "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
@@ -204,7 +263,10 @@
       "function feeForPower(uint8 power) view returns (uint256)",
       "function mint(uint8 power) payable",
       "function isApprovedForAll(address owner, address operator) view returns (bool)",
-      "function setApprovalForAll(address operator, bool approved)"
+      "function setApprovalForAll(address operator, bool approved)",
+      "function totalSupply() view returns (uint256)",
+      "function getTotalPowerMinted() view returns (uint256)",
+      "function basePrice() view returns (uint256)"
     ];
 
     const STAKING_ABI = [
@@ -213,7 +275,8 @@
       "function claimRewards()",
       "function stakedTokensOf(address) view returns (uint256[])",
       "function pendingRewards(address) view returns (uint256)",
-      "function totalPowerStaked(address) view returns (uint256)",
+      "function totalPowerStaked() view returns (uint256)",
+      "function totalNFTsStaked() view returns (uint256)",
       "function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])"
     ];
 
@@ -231,14 +294,13 @@
     function dbg(...args) {
       console.log(...args);
       try {
-        debugEl.textContent = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' | ');
+        if (debugEl) debugEl.textContent = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' | ');
       } catch {}
     }
 
     document.getElementById('mint-button').disabled = true;
     document.getElementById('claim-button').disabled = true;
 
-    // helper: verify the RPC at SONIC_RPC returns the expected chainId
     async function rpcReportsCorrectChain() {
       try {
         const resp = await fetch(SONIC_RPC, {
@@ -249,7 +311,6 @@
         const data = await resp.json();
         dbg('RPC eth_chainId response', data);
         if (data && data.result) {
-          // result is hex string
           return parseInt(data.result, 16) === REQUIRED_CHAIN_ID;
         }
       } catch (e) {
@@ -258,22 +319,17 @@
       return false;
     }
 
-    // attempt to switch; if wallet complains chain unknown, attempt to add then switch
     async function trySwitchOrAdd() {
       if (!window.ethereum || !window.ethereum.request) {
         dbg('no window.ethereum');
         return false;
       }
-
-      // sanity: if RPC doesn't report correct chain, bail early and show debug
       const rpcOk = await rpcReportsCorrectChain();
       dbg('rpcOk', rpcOk);
       if (!rpcOk) {
-        dbg('RPC endpoint does not report expected chainId; check SONIC_RPC or try alternate RPC');
         document.getElementById('status').textContent = 'Sonic RPC mismatch';
         return false;
       }
-
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
@@ -290,7 +346,6 @@
               method: 'wallet_addEthereumChain',
               params: SONIC_PARAMS
             });
-            // retry switch
             await window.ethereum.request({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: SONIC_CHAIN_ID_HEX }]
@@ -354,7 +409,6 @@
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
           return;
         }
-        // refresh provider network after switch
         try { net = await provider.getNetwork(); dbg('network after switch', net); } catch (e) { dbg('getNetwork after switch failed', e); }
         if (!net || net.chainId !== REQUIRED_CHAIN_ID) {
           document.getElementById('status').textContent = 'Please switch to Sonic Testnet';
@@ -404,6 +458,7 @@
           document.getElementById('status').textContent = 'Mint successful!';
           await populateOwned();
           await populateStaked();
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('mint error', e);
@@ -428,6 +483,7 @@
           document.getElementById('stake-status').textContent = 'Staked!';
           await populateOwned();
           await populateStaked();
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('stake error', e);
@@ -445,6 +501,7 @@
           document.getElementById('stake-status').textContent = 'Unstaked!';
           await populateOwned();
           await populateStaked();
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('unstake error', e);
@@ -458,6 +515,7 @@
           const tx = await stakingContract.claimRewards();
           await tx.wait();
           document.getElementById('stake-status').textContent = 'Claimed!';
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('claim error', e);
@@ -511,16 +569,120 @@
       }
     }
 
-    // show provider status on load
+    // Refresh banner (protocol-level) stats
+    async function refreshBannerStats() {
+      try {
+        // Use a read-only provider if available, otherwise provider
+        const readProvider = provider || new ethers.providers.JsonRpcProvider(SONIC_RPC);
+
+        const nftRead = new ethers.Contract(NFT_ADDRESS, NFT_ABI, readProvider);
+        const stakingReadLocal = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, readProvider);
+
+        // total NFTs minted (ERC721Enumerable.totalSupply)
+        let totalNfts = '—';
+        try {
+          const ts = await nftRead.totalSupply();
+          totalNfts = ts.toString();
+          document.getElementById('stat-total-nfts').textContent = totalNfts;
+        } catch (e) {
+          dbg('totalSupply read failed', e);
+          document.getElementById('stat-total-nfts').textContent = 'N/A';
+        }
+
+        // total power minted (contract getter)
+        let totalPowerMinted = '—';
+        try {
+          const tpm = await nftRead.getTotalPowerMinted();
+          totalPowerMinted = tpm.toString();
+          document.getElementById('stat-total-power-minted').textContent = totalPowerMinted;
+        } catch (e) {
+          dbg('getTotalPowerMinted read failed', e);
+          document.getElementById('stat-total-power-minted').textContent = 'N/A';
+        }
+
+        // basePrice (per power) and calculate invested = totalPowerMinted * basePrice
+        try {
+          const bp = await nftRead.basePrice();
+          if (bp && totalPowerMinted !== '—' && totalPowerMinted !== 'N/A') {
+            const investedWei = bp.mul(ethers.BigNumber.from(totalPowerMinted));
+            // display as integer S (no decimals): ether units already used for basePrice in contract
+            // basePrice stored in wei; convert to ether units then multiply gives ether amount (as BigNumber may be fractional if converted)
+            const investedInS = ethers.utils.formatUnits(investedWei, 18); // string with decimals
+            // remove decimals for display per request (without decimals)
+            const investedNoDecimals = investedInS.split('.')[0];
+            document.getElementById('stat-total-invested').textContent = investedNoDecimals + ' S';
+          } else {
+            document.getElementById('stat-total-invested').textContent = 'N/A';
+          }
+        } catch (e) {
+          dbg('basePrice or invested calc failed', e);
+          document.getElementById('stat-total-invested').textContent = 'N/A';
+        }
+
+        // total NFTs staked & total power staked
+        try {
+          // contract exposes public vars; attempt to read them
+          let totalNftsStaked = '—';
+          let totalPowerStaked = '—';
+          try {
+            const tns = await stakingReadLocal.totalNFTsStaked();
+            totalNftsStaked = tns.toString();
+            document.getElementById('stat-total-nfts-staked').textContent = totalNftsStaked;
+          } catch (e) {
+            // fallback: if totalNFTsStaked not present, set N/A
+            dbg('totalNFTsStaked read failed', e);
+            document.getElementById('stat-total-nfts-staked').textContent = 'N/A';
+          }
+          try {
+            const tps = await stakingReadLocal.totalPowerStaked();
+            totalPowerStaked = tps.toString();
+            document.getElementById('stat-total-power-staked').textContent = totalPowerStaked;
+          } catch (e) {
+            dbg('totalPowerStaked read failed', e);
+            document.getElementById('stat-total-power-staked').textContent = 'N/A';
+          }
+        } catch (e) {
+          dbg('staking totals read failed', e);
+          document.getElementById('stat-total-nfts-staked').textContent = 'N/A';
+          document.getElementById('stat-total-power-staked').textContent = 'N/A';
+        }
+
+        // total rewards distributed — not exposed in contract; attempt to call totalRewardsDistributed()
+        // if not present, leave N/A. We can show contract balance as approximation, but that's not distributed.
+        try {
+          if (stakingReadLocal.totalRewardsDistributed) {
+            const trd = await stakingReadLocal.totalRewardsDistributed();
+            // show integer (no decimals)
+            const trdStr = ethers.utils.formatUnits(trd, 18).split('.')[0];
+            document.getElementById('stat-total-rewards-distributed').textContent = trdStr + ' S';
+          } else {
+            // fallback: show rewards pool (contract balance) as "pool" instead of distributed
+            const bal = await readProvider.getBalance(STAKING_ADDRESS);
+            const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
+            document.getElementById('stat-total-rewards-distributed').textContent = `${balStr} S (pool)`;
+          }
+        } catch (e) {
+          dbg('rewards distributed / pool read failed', e);
+          document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
+        }
+
+      } catch (e) {
+        dbg('refreshBannerStats failed', e);
+      }
+    }
+
+    // show provider status on load and refresh banner
     window.addEventListener('load', async () => {
       try {
         dbg('window.ethereum', { present: !!window.ethereum, providerType: window.ethereum && window.ethereum.request ? 'EIP-1193' : 'unknown' });
         const rpcOk = await rpcReportsCorrectChain();
         dbg('SONIC_RPC reports expected chainId?', rpcOk);
       } catch (e) { dbg('load error', e); }
+      // initial banner refresh using JSON-RPC provider (no wallet required)
+      await refreshBannerStats();
+      // refresh periodically to keep rolling banner fresh
+      setInterval(refreshBannerStats, 30_000);
     });
   </script>
 </body>
 </html>
-
-
