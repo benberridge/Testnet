@@ -173,7 +173,7 @@
     <div class="ticker" id="rolling-stats">
       <span class="stat-pill">Total NFTs minted: <span id="stat-total-nfts">—</span></span>
       <span class="stat-pill">Total power minted: <span id="stat-total-power-minted">—</span></span>
-      <span class="stat-pill">Total Invested: <span id="stat-total-invested">—</span></span>
+      <span class="stat-pill">Total $S Invested: <span id="stat-total-invested">—</span></span>
       <span class="stat-pill">Total NFTs staked: <span id="stat-total-nfts-staked">—</span></span>
       <span class="stat-pill">Total power staked: <span id="stat-total-power-staked">—</span></span>
       <span class="stat-pill">Total rewards distributed: <span id="stat-total-rewards-distributed">N/A</span></span>
@@ -608,7 +608,7 @@
             const investedWei = bp.mul(ethers.BigNumber.from(totalPowerMinted));
             const investedInS = ethers.utils.formatUnits(investedWei, 18);
             const investedNoDecimals = investedInS.split('.')[0];
-            document.getElementById('stat-total-invested').textContent =  '$S +'investedNoDecimals;
+            document.getElementById('stat-total-invested').textContent = investedNoDecimals + ' S';
           } else {
             document.getElementById('stat-total-invested').textContent = 'N/A';
           }
