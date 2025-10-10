@@ -53,7 +53,7 @@
       display: inline-block;
       white-space: nowrap;
       will-change: transform;
-      animation: scroll-left 18s linear infinite;
+      animation: scroll-left 36s linear infinite; /* slowed 50%: was 18s -> now 36s */
       font-weight: 500;
       color: var(--text-light);
       font-size: 0.95rem;
@@ -82,6 +82,7 @@
       margin-bottom: var(--gap);
       letter-spacing: 2px;
     }
+    /* Bring connect button forward above the rolling banner by increasing z-index */
     #wallet-button {
       position: fixed; top: calc(var(--gap)); right: var(--gap);
       padding: .6rem 1.2rem;
@@ -90,7 +91,7 @@
       border-radius: var(--radius);
       font-weight: 500; cursor: pointer;
       transition: background var(--transition), color var(--transition);
-      z-index: 10;
+      z-index: 1101; /* higher than .top-banner (1000) so button appears above it */
     }
     #wallet-button:hover { background: var(--neon-dim); color: #fff; }
     .banner-wrapper {
@@ -162,7 +163,7 @@
     }
     .debug { position: fixed; left: 12px; bottom: 12px; background: rgba(0,0,0,0.6); color: #fff; padding: .5rem .75rem; border-radius: 8px; font-size: .85rem; max-width: 40%; z-index: 9999; overflow: auto; max-height: 30vh; }
     @media (max-width: 600px) {
-      .ticker { animation-duration: 26s; font-size: 0.85rem; }
+      .ticker { animation-duration: 52s; font-size: 0.85rem; } /* mobile slowed 50%: was 26s -> now 52s */
       body { padding-top: calc(var(--banner-h) + 12px); }
     }
   </style>
@@ -605,10 +606,7 @@
           const bp = await nftRead.basePrice();
           if (bp && totalPowerMinted !== '—' && totalPowerMinted !== 'N/A') {
             const investedWei = bp.mul(ethers.BigNumber.from(totalPowerMinted));
-            // display as integer S (no decimals): ether units already used for basePrice in contract
-            // basePrice stored in wei; convert to ether units then multiply gives ether amount (as BigNumber may be fractional if converted)
-            const investedInS = ethers.utils.formatUnits(investedWei, 18); // string with decimals
-            // remove decimals for display per request (without decimals)
+            const investedInS = ethers.utils.formatUnits(investedWei, 18);
             const investedNoDecimals = investedInS.split('.')[0];
             document.getElementById('stat-total-invested').textContent = investedNoDecimals + ' S';
           } else {
@@ -621,7 +619,6 @@
 
         // total NFTs staked & total power staked
         try {
-          // contract exposes public vars; attempt to read them
           let totalNftsStaked = '—';
           let totalPowerStaked = '—';
           try {
@@ -629,7 +626,6 @@
             totalNftsStaked = tns.toString();
             document.getElementById('stat-total-nfts-staked').textContent = totalNftsStaked;
           } catch (e) {
-            // fallback: if totalNFTsStaked not present, set N/A
             dbg('totalNFTsStaked read failed', e);
             document.getElementById('stat-total-nfts-staked').textContent = 'N/A';
           }
@@ -648,15 +644,12 @@
         }
 
         // total rewards distributed — not exposed in contract; attempt to call totalRewardsDistributed()
-        // if not present, leave N/A. We can show contract balance as approximation, but that's not distributed.
         try {
           if (stakingReadLocal.totalRewardsDistributed) {
             const trd = await stakingReadLocal.totalRewardsDistributed();
-            // show integer (no decimals)
             const trdStr = ethers.utils.formatUnits(trd, 18).split('.')[0];
             document.getElementById('stat-total-rewards-distributed').textContent = trdStr + ' S';
           } else {
-            // fallback: show rewards pool (contract balance) as "pool" instead of distributed
             const bal = await readProvider.getBalance(STAKING_ADDRESS);
             const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
             document.getElementById('stat-total-rewards-distributed').textContent = `${balStr} S (pool)`;
