@@ -519,7 +519,8 @@
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
-          document.getElementById('stake-status').textContent = 'Claimed!';          await refreshBannerStats();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('claim error', e);
@@ -646,18 +647,32 @@
           document.getElementById('stat-total-power-staked').textContent = 'N/A';
         }
 
-        // total rewards distributed — display accRewardPerPower directly (no multiply by totalPowerMinted)
+        // total rewards distributed — use accRewardPerPower with proper decimal handling
         try {
           const acc = await stakingReadLocal.accRewardPerPower();
           if (acc) {
-            const accStr = ethers.utils.formatUnits(acc, 18).split('.')[0];
-            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + accStr;
+            // acc is stored scaled by 1e18 (so 105033333333333333333 represents 105.033333333333333333)
+            const accHuman = ethers.utils.formatUnits(acc, 18); // "105.033333333333333333"
+            // If we have totalPowerMinted, compute totalRewards = acc * totalPowerMinted (acc in wei-per-power)
+            if (totalPowerMinted) {
+              // totalRewardsWei = acc (wei per power) * totalPowerMinted (power units)
+              const totalRewardsWei = acc.mul(totalPowerMinted);
+              const totalRewardsHuman = ethers.utils.formatUnits(totalRewardsWei, 18); // human readable with decimals
+              // show full decimal string (trim trailing zeros while keeping precision)
+              const trimmed = trimTrailingZeros(totalRewardsHuman);
+              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + trimmed;
+            } else {
+              // No totalPowerMinted available — display accRewardPerPower itself with decimals
+              const accTrimmed = trimTrailingZeros(accHuman);
+              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + accTrimmed + ' (per power)';
+            }
           } else {
             // fallback to pool balance if acc missing
             try {
               const bal = await readProvider.getBalance(STAKING_ADDRESS);
-              const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
-              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + balStr + ' (pool)';
+              const balStr = ethers.utils.formatUnits(bal, 18);
+              const balTrim = trimTrailingZeros(balStr);
+              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + balTrim + ' (pool)';
             } catch (e) {
               document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
             }
@@ -670,6 +685,17 @@
       } catch (e) {
         dbg('refreshBannerStats failed', e);
       }
+    }
+
+    // utility to trim trailing zeros but keep at least one digit after decimal if necessary
+    function trimTrailingZeros(numStr) {
+      if (!numStr) return numStr;
+      if (numStr.indexOf('.') === -1) return numStr;
+      // remove trailing zeros
+      let s = numStr.replace(/0+$/, '');
+      // if the decimal point is last, drop it
+      if (s.endsWith('.')) s = s.slice(0, -1);
+      return s;
     }
 
     // show provider status on load and refresh banner
