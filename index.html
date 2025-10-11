@@ -259,7 +259,7 @@
     const SONIC_RPC = 'https://rpc.testnet.soniclabs.com';
     const PRECISION = ethers.BigNumber.from("1000000000000000000");
 
-    // Expanded ABIs for reading needed stats
+    // Expanded ABIs for reading needed stats (added accRewardPerPower)
     const NFT_ABI = [
       "function balanceOf(address owner) view returns (uint256)",
       "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
@@ -281,6 +281,7 @@
       "function pendingRewards(address) view returns (uint256)",
       "function totalPowerStaked() view returns (uint256)",
       "function totalNFTsStaked() view returns (uint256)",
+      "function accRewardPerPower() view returns (uint256)",
       "function getUserStake(address) view returns (uint256,uint256,uint256,uint256[],uint8[])"
     ];
 
@@ -518,8 +519,7 @@
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
-          document.getElementById('stake-status').textContent = 'Claimed!';
-          await refreshBannerStats();
+          document.getElementById('stake-status').textContent = 'Claimed!';          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('claim error', e);
@@ -593,12 +593,12 @@
           document.getElementById('stat-total-nfts').textContent = 'N/A';
         }
 
-        // total power minted (contract getter)
-        let totalPowerMinted = '—';
+        // total power minted (contract getter) - keep as BN for later calc
+        let totalPowerMinted = null;
         try {
           const tpm = await nftRead.getTotalPowerMinted();
-          totalPowerMinted = tpm.toString();
-          document.getElementById('stat-total-power-minted').textContent = totalPowerMinted;
+          totalPowerMinted = tpm; // BigNumber
+          document.getElementById('stat-total-power-minted').textContent = tpm.toString();
         } catch (e) {
           dbg('getTotalPowerMinted read failed', e);
           document.getElementById('stat-total-power-minted').textContent = 'N/A';
@@ -607,11 +607,10 @@
         // basePrice (per power) and calculate invested = totalPowerMinted * basePrice
         try {
           const bp = await nftRead.basePrice();
-          if (bp && totalPowerMinted !== '—' && totalPowerMinted !== 'N/A') {
-            const investedWei = bp.mul(ethers.BigNumber.from(totalPowerMinted));
+          if (bp && totalPowerMinted) {
+            const investedWei = bp.mul(totalPowerMinted);
             const investedInS = ethers.utils.formatUnits(investedWei, 18);
             const investedNoDecimals = investedInS.split('.')[0];
-            // changed format to: $S XXX
             document.getElementById('stat-total-invested').textContent = '$S ' + investedNoDecimals;
           } else {
             document.getElementById('stat-total-invested').textContent = 'N/A';
@@ -647,19 +646,24 @@
           document.getElementById('stat-total-power-staked').textContent = 'N/A';
         }
 
-        // total rewards distributed — not exposed in contract; attempt to call totalRewardsDistributed()
+        // total rewards distributed — display accRewardPerPower directly (no multiply by totalPowerMinted)
         try {
-          if (stakingReadLocal.totalRewardsDistributed) {
-            const trd = await stakingReadLocal.totalRewardsDistributed();
-            const trdStr = ethers.utils.formatUnits(trd, 18).split('.')[0];
-            document.getElementById('stat-total-rewards-distributed').textContent = trdStr + ' S';
+          const acc = await stakingReadLocal.accRewardPerPower();
+          if (acc) {
+            const accStr = ethers.utils.formatUnits(acc, 18).split('.')[0];
+            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + accStr;
           } else {
-            const bal = await readProvider.getBalance(STAKING_ADDRESS);
-            const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
-            document.getElementById('stat-total-rewards-distributed').textContent = `${balStr} S (pool)`;
+            // fallback to pool balance if acc missing
+            try {
+              const bal = await readProvider.getBalance(STAKING_ADDRESS);
+              const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
+              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + balStr + ' (pool)';
+            } catch (e) {
+              document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
+            }
           }
         } catch (e) {
-          dbg('rewards distributed / pool read failed', e);
+          dbg('rewards distributed compute failed', e);
           document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
         }
 
@@ -675,16 +679,13 @@
         const rpcOk = await rpcReportsCorrectChain();
         dbg('SONIC_RPC reports expected chainId?', rpcOk);
       } catch (e) { dbg('load error', e); }
-
       // initial banner refresh using JSON-RPC provider (no wallet required)
       await refreshBannerStats();
-
       // start ticker after initial stats refresh to avoid visual jump
       try {
         const ticker = document.getElementById('rolling-stats');
         if (ticker) ticker.classList.add('running');
       } catch (e) { dbg('ticker start failed', e); }
-
       // refresh periodically to keep rolling banner fresh
       setInterval(refreshBannerStats, 30_000);
     });
