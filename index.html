@@ -179,7 +179,6 @@
       <span class="stat-pill">Total Invested: <span id="stat-total-invested">—</span></span>
       <span class="stat-pill">Total NFTs staked: <span id="stat-total-nfts-staked">—</span></span>
       <span class="stat-pill">Total power staked: <span id="stat-total-power-staked">—</span></span>
-      <span class="stat-pill">Total rewards distributed: <span id="stat-total-rewards-distributed">N/A</span></span>
     </div>
   </div>
 
@@ -259,7 +258,7 @@
     const SONIC_RPC = 'https://rpc.testnet.soniclabs.com';
     const PRECISION = ethers.BigNumber.from("1000000000000000000");
 
-    // Expanded ABIs for reading needed stats (added accRewardPerPower)
+    // Expanded ABIs for reading needed stats (accRewardPerPower kept, but not used here)
     const NFT_ABI = [
       "function balanceOf(address owner) view returns (uint256)",
       "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
@@ -519,7 +518,8 @@
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
-          document.getElementById('stake-status').textContent = 'Claimed!';          await refreshBannerStats();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('claim error', e);
@@ -644,27 +644,6 @@
           dbg('staking totals read failed', e);
           document.getElementById('stat-total-nfts-staked').textContent = 'N/A';
           document.getElementById('stat-total-power-staked').textContent = 'N/A';
-        }
-
-        // total rewards distributed — display accRewardPerPower directly (no multiply by totalPowerMinted)
-        try {
-          const acc = await stakingReadLocal.accRewardPerPower();
-          if (acc) {
-            const accStr = ethers.utils.formatUnits(acc, 18).split('.')[0];
-            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + accStr;
-          } else {
-            // fallback to pool balance if acc missing
-            try {
-              const bal = await readProvider.getBalance(STAKING_ADDRESS);
-              const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
-              document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + balStr + ' (pool)';
-            } catch (e) {
-              document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
-            }
-          }
-        } catch (e) {
-          dbg('rewards distributed compute failed', e);
-          document.getElementById('stat-total-rewards-distributed').textContent = 'N/A';
         }
 
       } catch (e) {
