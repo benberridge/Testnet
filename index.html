@@ -519,7 +519,8 @@
           document.getElementById('stake-status').textContent = 'Claiming…';
           const tx = await stakingContract.claimRewards();
           await tx.wait();
-          document.getElementById('stake-status').textContent = 'Claimed!';          await refreshBannerStats();
+          document.getElementById('stake-status').textContent = 'Claimed!';
+          await refreshBannerStats();
           await updateStats();
         } catch (e) {
           dbg('claim error', e);
@@ -646,10 +647,16 @@
           document.getElementById('stat-total-power-staked').textContent = 'N/A';
         }
 
-        // total rewards distributed — display accRewardPerPower directly (no multiply by totalPowerMinted)
+        // total rewards distributed — compute whole token amount without decimals
         try {
           const acc = await stakingReadLocal.accRewardPerPower();
-          if (acc) {
+          if (acc && totalPowerMinted) {
+            // acc is wei-per-power (18 decimals); multiply by totalPowerMinted to get total wei rewards
+            const totalRewardsWei = acc.mul(totalPowerMinted);
+            const totalRewardsStr = ethers.utils.formatUnits(totalRewardsWei, 18).split('.')[0];
+            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + totalRewardsStr;
+          } else if (acc) {
+            // If totalPowerMinted missing, fallback to showing acc as whole number (no decimals) for transparency
             const accStr = ethers.utils.formatUnits(acc, 18).split('.')[0];
             document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + accStr;
           } else {
