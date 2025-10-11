@@ -646,15 +646,14 @@
           document.getElementById('stat-total-power-staked').textContent = 'N/A';
         }
 
-        // total rewards distributed — compute from accRewardPerPower * totalPowerMinted / PRECISION
+        // total rewards distributed — display accRewardPerPower directly (no multiply by totalPowerMinted)
         try {
           const acc = await stakingReadLocal.accRewardPerPower();
-          if (acc && totalPowerMinted) {
-            const totalRewardsWei = acc.mul(totalPowerMinted).div(PRECISION);
-            const totalRewardsStr = ethers.utils.formatUnits(totalRewardsWei, 18).split('.')[0];
-            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + totalRewardsStr;
+          if (acc) {
+            const accStr = ethers.utils.formatUnits(acc, 18).split('.')[0];
+            document.getElementById('stat-total-rewards-distributed').textContent = '$S ' + accStr;
           } else {
-            // fallback to pool balance if we can't compute
+            // fallback to pool balance if acc missing
             try {
               const bal = await readProvider.getBalance(STAKING_ADDRESS);
               const balStr = ethers.utils.formatUnits(bal, 18).split('.')[0];
