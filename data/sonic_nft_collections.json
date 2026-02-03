@@ -1,0 +1,4 @@
+[
+  { "address": "0x1234...ABCD", "standard": "ERC721",  "mints": 102 },
+  { "address": "0x5678...EF00", "standard": "ERC1155", "mints":  87 }
+]
